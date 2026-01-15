@@ -1,0 +1,3 @@
+[submodule "backend/MRTGuessr-assets"]
+	path = backend/MRTGuessr-assets
+	url = git@github.com:MeloQueenie/MRTGuessr-assets.git
