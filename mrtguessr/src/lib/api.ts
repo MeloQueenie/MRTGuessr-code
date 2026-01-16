@@ -14,6 +14,11 @@ export const logoUrl = {
   Text: `${BASE_URL}/graphics/logo/MRTGuessr-GameLogo_TextOnly.svg`,
 }
 
+export const pinpointUrl = {
+  Circle: `${BASE_URL}/graphics/pinpoint/MRTGuessr-PinpointLogo_Circle.svg`,
+  Square: `${BASE_URL}/graphics/pinpoint/MRTGuessr-PinpointLogo_Square.svg`,
+}
+
 export async function fetchRoundData() {
   let res = await fetch(`${API_URL}/round`);
   let data = await res.json();
