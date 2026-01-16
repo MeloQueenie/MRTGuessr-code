@@ -13,15 +13,14 @@
 
 // Scale factor to convert map coordinates to Minecraft coordinates
 // Minecraft world range: 60000 blocks (-30000 to 30000)
-// Map coordinate range: ~983.6 units (-491.8 to 491.8)
-// Scale: 60000 / 983.6 ≈ 61
-export const SCALE_FACTOR = 61
+// Map coordinate range: 
+export const SCALE_FACTOR = 64
 
 // Maximum Minecraft coordinate
 export const MC_MAX = 30000
 
 // Maximum map coordinate (MC_MAX / SCALE_FACTOR)
-export const MAP_MAX = MC_MAX / SCALE_FACTOR // ~491.8
+export const MAP_MAX = MC_MAX / SCALE_FACTOR
 
 /**
  * Converts Leaflet CRS.Simple coordinates to Minecraft world coordinates
@@ -30,7 +29,7 @@ export const MAP_MAX = MC_MAX / SCALE_FACTOR // ~491.8
  * @returns Object with minecraft X and Z coordinates, clamped to world bounds
  */
 export function leafletToMinecraft(lat: number, lng: number): { x: number; z: number } {
-  // Direct scaling: map coordinates × 61 = Minecraft coordinates
+  // Direct scaling: map coordinates × 64 = Minecraft coordinates
   let x = Math.round(lng * SCALE_FACTOR)
   let z = Math.round(-lat * SCALE_FACTOR) // Negate lat to flip Z axis
 
@@ -60,29 +59,4 @@ export function minecraftToLeaflet(x: number, z: number): { lat: number; lng: nu
  */
 export function formatMinecraftCoords(x: number, z: number): string {
   return `X: ${x}, Z: ${z}`
-}
-
-/**
- * Helper to test coordinate conversion with known points
- * Example: Top-left corner at Leaflet (476, -476) should map to Minecraft (-29036, 29036)
- */
-export function testCoordinateConversion() {
-  console.log('=== Coordinate Conversion Test ===')
-
-  // Test top-left corner
-  const topLeft = leafletToMinecraft(476, -476)
-  console.log('Top-left (476, -476):', formatMinecraftCoords(topLeft.x, topLeft.z))
-
-  // Test center
-  const center = leafletToMinecraft(0, 0)
-  console.log('Center (0, 0):', formatMinecraftCoords(center.x, center.z))
-
-  // Test bottom-right corner
-  const bottomRight = leafletToMinecraft(-476, 476)
-  console.log('Bottom-right (-476, 476):', formatMinecraftCoords(bottomRight.x, bottomRight.z))
-
-  // Test reverse conversion
-  const mcCoords = { x: 15000, z: -10000 }
-  const leaflet = minecraftToLeaflet(mcCoords.x, mcCoords.z)
-  console.log(`Minecraft ${formatMinecraftCoords(mcCoords.x, mcCoords.z)}:`, `(${leaflet.lat.toFixed(2)}, ${leaflet.lng.toFixed(2)})`)
 }
