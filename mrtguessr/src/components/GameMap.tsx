@@ -3,12 +3,11 @@ import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap, useMapEvents 
 import { CRS } from 'leaflet'
 import { leafletToMinecraft, formatMinecraftCoords, minecraftToLeaflet } from '@/lib/coordinates'
 import { GuessResult } from '@/lib/api'
-
 import 'leaflet/dist/leaflet.css'
 import 'leaflet/dist/leaflet.js'
 
 
-function MapResizeHandler({ isExpanded }: { isExpanded: boolean }) {
+function MapResizeHandler({ isExpanded, isEndRoundView }: { isExpanded: boolean, isEndRoundView: boolean }) {
   const map = useMap()
 
   useEffect(() => {
@@ -16,7 +15,7 @@ function MapResizeHandler({ isExpanded }: { isExpanded: boolean }) {
       map.invalidateSize()
     }, 300)
     return () => clearTimeout(timer)
-  }, [isExpanded, map])
+  }, [isExpanded, isEndRoundView, map])
 
   return null
 }
@@ -33,15 +32,16 @@ function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number
 
 interface GameMapProps {
   isExpanded: boolean
+  isEndRoundView: boolean,
   markerPosition: [number, number] | null,
   guessResult?: GuessResult | null,
   onMapClick: (lat: number, lng: number) => void
 }
 
-export function GameMap({ isExpanded, markerPosition, guessResult, onMapClick }: GameMapProps) {
+export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResult, onMapClick }: GameMapProps) {
   return (
     <MapContainer crs={CRS.Simple} center={[0, 0]} zoom={8} style={{ height: '100%', width: '100%' }}>
-      <MapResizeHandler isExpanded={isExpanded} />
+      <MapResizeHandler isExpanded={isExpanded} isEndRoundView={isEndRoundView} />
       <MapClickHandler onMapClick={onMapClick} />
       <TileLayer
         attribution='&copy; MinecartRapidTransit'
