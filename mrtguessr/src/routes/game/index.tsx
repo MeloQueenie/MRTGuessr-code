@@ -1,10 +1,11 @@
 import { ClientOnly, createFileRoute } from '@tanstack/react-router'
 import { ReactPhotoSphereViewer } from 'react-photo-sphere-viewer'
 import { useState, useEffect } from 'react'
-import { fetchRoundData } from '@/lib/api'
+import { fetchRoundData, postGuess, GuessResult } from '@/lib/api'
 import { useHeader } from '@/contexts/HeaderContext'
 import { GameMap } from '@/components/GameMap'
 import GuessButton from '@/components/GuessButton'
+import { leafletToMinecraft } from '@/lib/coordinates'
 
 export const Route = createFileRoute('/game/')({
   ssr: false,
@@ -31,6 +32,7 @@ function RouteComponent() {
   let [timeLeft, setTimeLeft] = useState(60);
   let [isMapExpanded, setIsMapExpanded] = useState(false);
   let [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
+  let [guessResult, setGuessResult] = useState<GuessResult | null>(null);
 
   async function getRoundData() {
     let data = await fetchRoundData();
@@ -85,11 +87,19 @@ function RouteComponent() {
           <GameMap
             isExpanded={isMapExpanded}
             markerPosition={markerPosition}
+            guessResult={guessResult}
             onMapClick={(lat, lng) => setMarkerPosition([lat, lng])}
           />
         </ClientOnly>
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] z-[1000]">
-          <GuessButton onClick={() => { /* handle guess button click */ }} />
+          <GuessButton onClick={async () => { 
+            if (markerPosition) {
+              let coords = leafletToMinecraft(markerPosition[0], markerPosition[1]);
+              console.log(`Guessing at Minecraft coords: x=${coords.x}, z=${coords.z}`);
+              let result = await postGuess(panoramaId, coords.x, coords.z);
+              setGuessResult(result);
+            }
+           }} />
         </div>
       </div>
     </div>

@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { CRS } from 'leaflet'
-import { leafletToMinecraft, formatMinecraftCoords } from '@/lib/coordinates'
+import { leafletToMinecraft, formatMinecraftCoords, minecraftToLeaflet } from '@/lib/coordinates'
+import { GuessResult } from '@/lib/api'
 
 import 'leaflet/dist/leaflet.css'
 import 'leaflet/dist/leaflet.js'
+
 
 function MapResizeHandler({ isExpanded }: { isExpanded: boolean }) {
   const map = useMap()
@@ -31,11 +33,12 @@ function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number
 
 interface GameMapProps {
   isExpanded: boolean
-  markerPosition: [number, number] | null
+  markerPosition: [number, number] | null,
+  guessResult?: GuessResult | null,
   onMapClick: (lat: number, lng: number) => void
 }
 
-export function GameMap({ isExpanded, markerPosition, onMapClick }: GameMapProps) {
+export function GameMap({ isExpanded, markerPosition, guessResult, onMapClick }: GameMapProps) {
   return (
     <MapContainer crs={CRS.Simple} center={[0, 0]} zoom={8} style={{ height: '100%', width: '100%' }}>
       <MapResizeHandler isExpanded={isExpanded} />
@@ -59,6 +62,24 @@ export function GameMap({ isExpanded, markerPosition, onMapClick }: GameMapProps
               Your guess: {formatMinecraftCoords(mcCoords.x, mcCoords.z)}
             </Popup>
           </Marker>
+        )
+      })()}
+      {guessResult && (() => {
+        const mcCoords = { x: guessResult.actualX, z: guessResult.actualZ };
+        const leafletCoords = minecraftToLeaflet(mcCoords.x, mcCoords.z);
+        console.log('Actual location in Leaflet coords:', leafletCoords);
+        return (
+          <>
+            <Marker position={[leafletCoords.lat, leafletCoords.lng]}>
+              <Popup>
+                Actual location: {formatMinecraftCoords(mcCoords.x, mcCoords.z)}<br />
+                Distance: {guessResult.distance} blocks<br />
+                Score: {guessResult.score}<br />
+                Town: {guessResult.town}
+              </Popup>
+            </Marker>
+            <Polyline positions={[[markerPosition![0], markerPosition![1]], [leafletCoords.lat, leafletCoords.lng]]} />
+          </>
         )
       })()}
     </MapContainer>

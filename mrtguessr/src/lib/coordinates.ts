@@ -32,7 +32,7 @@ export const MAP_MAX = MC_MAX / SCALE_FACTOR // ~491.8
 export function leafletToMinecraft(lat: number, lng: number): { x: number; z: number } {
   // Direct scaling: map coordinates × 61 = Minecraft coordinates
   let x = Math.round(lng * SCALE_FACTOR)
-  let z = Math.round(lat * SCALE_FACTOR)
+  let z = Math.round(-lat * SCALE_FACTOR) // Negate lat to flip Z axis
 
   // Clamp to Minecraft world bounds
   x = Math.max(-MC_MAX, Math.min(MC_MAX, x))
@@ -50,7 +50,7 @@ export function leafletToMinecraft(lat: number, lng: number): { x: number; z: nu
 export function minecraftToLeaflet(x: number, z: number): { lat: number; lng: number } {
   // Inverse scaling: Minecraft coordinates / 61 = map coordinates
   const lng = x / SCALE_FACTOR
-  const lat = z / SCALE_FACTOR
+  const lat = -z / SCALE_FACTOR // Negate z to flip Z axis
 
   return { lat, lng }
 }

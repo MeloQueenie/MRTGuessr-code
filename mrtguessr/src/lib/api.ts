@@ -24,3 +24,29 @@ export async function fetchRoundData() {
 export async function getPanoramaUrl(panoramaId: string) {
   return `${API_URL}/panorama/${panoramaId}`;
 }
+
+export interface GuessResult {
+  actualX: number;
+  actualZ: number;
+  distance: number;
+  score: number;
+  town: string;
+}
+
+export async function postGuess(panoramaId: string, guessX: number, guessZ: number): Promise<GuessResult> {
+  let res = await fetch(`${API_URL}/guess`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+
+    body: JSON.stringify({
+      panoramaId: panoramaId,
+      guessX: guessX,
+      guessZ: guessZ,
+    }),
+  });
+  let data = await res.json();
+  console.log(data);
+  return data;
+}
