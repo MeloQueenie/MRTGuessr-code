@@ -16,7 +16,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { logoUrl } from '@/lib/api'
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute('/')({component: App })
 
 function App() {
   return (
@@ -55,7 +55,7 @@ function App() {
         </div>
       </section>
 
-      <div className="py-6 text-center text-sm text-gray-500">
+      <div className="py-6 text-center text-sm text-gray-500" suppressHydrationWarning>
         © {new Date().getFullYear()} Seshpenguin & MeloQueen.
       </div>
     </div>

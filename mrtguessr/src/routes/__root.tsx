@@ -7,6 +7,7 @@ import Header from '../components/Header'
 import { HeaderProvider } from '../contexts/HeaderContext'
 
 import appCss from '../styles.css?url'
+import { logoUrl } from '@/lib/api'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,6 +18,7 @@ const queryClient = new QueryClient({
   },
 })
 
+const description = 'MRTGuessr - Guess cities and locations around the MinecartRapidTransit Server!'
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -30,6 +32,21 @@ export const Route = createRootRoute({
       {
         title: 'MRTGuessr - Guess cities around the MRT!',
       },
+      {
+        name: 'description',
+        content: description,
+      },
+      // Open Graph
+      { property: 'og:title', content: "MRTGuessr" },
+      { property: 'og:description', content: description },
+      { property: 'og:image', content: logoUrl.Full },
+      { property: 'og:type', content: 'game' },
+
+      // Twitter Card
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: "MRTGuessr" },
+      { name: 'twitter:description', content: description },
+      { name: 'twitter:image', content: logoUrl.Full },
     ],
     links: [
       {
