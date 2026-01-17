@@ -26,6 +26,9 @@ services:
       - "5000:5000"
     environment:
       - NODE_ENV=production
+    volumes:
+      - ./backend/MRTGuessr-assets:/app/MRTGuessr-assets:ro
+      - ./backend/cache:/app/cache
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; response = requests.get('http://localhost:5000/health'); exit(0) if response.status_code == 200 else exit(1)"]

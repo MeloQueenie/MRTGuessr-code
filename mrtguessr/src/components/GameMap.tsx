@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import { CircleMarker, MapContainer, Marker, Polyline, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { CRS, Icon } from 'leaflet'
 import { leafletToMinecraft, formatMinecraftCoords, minecraftToLeaflet } from '@/lib/coordinates'
 import { GuessResult, pinpointUrl } from '@/lib/api'
@@ -61,15 +61,20 @@ export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResul
         tileSize={128}
         minZoom={0}
         maxZoom={8}
-        // bounds={
-        //   [[-0, 0], [61, 61]]
-        // }
+        bounds={
+          [[-500, -500], [500, 500]]
+        }
         noWrap
       />
+      <CircleMarker center={[-0.5, 0]} radius={5} color="white">
+        <Popup>
+          Central City
+        </Popup>
+      </CircleMarker>
       {markerPosition && (() => {
         const mcCoords = leafletToMinecraft(markerPosition[0], markerPosition[1])
         return (
-          <Marker position={markerPosition} icon={circleIconMarker}>
+          <Marker position={markerPosition} icon={squareIconMarker}>
             <Popup>
               Your guess: {formatMinecraftCoords(mcCoords.x, mcCoords.z)}
             </Popup>
@@ -82,7 +87,7 @@ export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResul
         console.log('Actual location in Leaflet coords:', leafletCoords);
         return (
           <>
-            <Marker position={[leafletCoords.lat, leafletCoords.lng]} icon={squareIconMarker}>
+            <Marker position={[leafletCoords.lat, leafletCoords.lng]} icon={circleIconMarker}>
               <Popup>
                 Actual location: {formatMinecraftCoords(mcCoords.x, mcCoords.z)}<br />
                 Distance: {guessResult.distance} blocks<br />

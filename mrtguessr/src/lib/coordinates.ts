@@ -49,7 +49,7 @@ export function leafletToMinecraft(lat: number, lng: number): { x: number; z: nu
 export function minecraftToLeaflet(x: number, z: number): { lat: number; lng: number } {
   // Inverse scaling: Minecraft coordinates / 61 = map coordinates
   const lng = x / SCALE_FACTOR
-  const lat = -z / SCALE_FACTOR // Negate z to flip Z axis
+  const lat = (-z - 35) / SCALE_FACTOR // Negate z to flip Z axis
 
   return { lat, lng }
 }
