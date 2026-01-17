@@ -3,13 +3,14 @@ import { ReactPhotoSphereViewer } from 'react-photo-sphere-viewer'
 import { useState, useEffect, useRef } from 'react'
 import Lottie, { LottieRefCurrentProps } from 'lottie-react'
 import { Button } from '@/components/ui/button'
-import { fetchRoundData, postGuess, GuessResult, logoUrl } from '@/lib/api'
+import { fetchRoundData, postGuess, GuessResult, logoUrl, API_URL } from '@/lib/api'
 import { useHeader } from '@/contexts/HeaderContext'
 import { GameMap } from '@/components/GameMap'
 import GuessButton from '@/components/GuessButton'
 import { leafletToMinecraft } from '@/lib/coordinates'
 import confettiAnimation from '@/components/Confetti.json'
 import { ArrowRight, Repeat } from 'lucide-react'
+import { useQuery, useMutation } from '@tanstack/react-query'
 
 export const Route = createFileRoute('/game/')({
   ssr: false,
@@ -31,7 +32,6 @@ function HeaderContent({ roundNumber, timeLeft }: { roundNumber: number; timeLef
 
 function RouteComponent() {
   const { setCenterContent } = useHeader()
-  const [panoramaId, setPanoramaId] = useState<string | undefined>(undefined);
   const [roundNumber, setRoundNumber] = useState(1);
   const [totalScore, setTotalScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -42,16 +42,32 @@ function RouteComponent() {
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const confettiRef = useRef<LottieRefCurrentProps>(null);
 
-  async function getRoundData() {
-    let data = await fetchRoundData();
-    setPanoramaId(data.panoramaId);
-    setTimeout(() => {
-      setShowLoadingScreen(false);
-    }, 1000);
-  }
+  const { data: roundData, refetch: refetchRound } = useQuery({
+    queryKey: ['roundData'],
+    queryFn: fetchRoundData,
+  })
+
+  const guessMutation = useMutation({
+    mutationFn: ({ panoramaId, x, z }: { panoramaId: string; x: number; z: number }) =>
+      postGuess(panoramaId, x, z),
+    onSuccess: (result) => {
+      setGuessResult(result)
+      setIsEndRoundView(true)
+      setTimeout(() => {
+        confettiRef.current?.play()
+      }, 250)
+    },
+  })
+
+  useEffect(() => {
+    if (roundData) {
+      setTimeout(() => {
+        setShowLoadingScreen(false)
+      }, 1000)
+    }
+  }, [roundData])
 
   async function resetAll() {
-    setPanoramaId(undefined);
     setRoundNumber(1);
     setTotalScore(0);
     setTimeLeft(0);
@@ -61,25 +77,26 @@ function RouteComponent() {
     setIsEndRoundView(false);
     setShowLoadingScreen(true);
     confettiRef.current?.stop();
-    await getRoundData();
+    await refetchRound();
   }
+
   function resetRound() {
     setShowLoadingScreen(true);
-    getRoundData();
     setIsEndRoundView(false);
     setMarkerPosition(null);
     setGuessResult(null);
     confettiRef.current?.stop();
+    refetchRound();
   }
 
   useEffect(() => {
     const handleRefresh = () => {
-      getRoundData();
+      refetchRound();
     };
 
     window.addEventListener('game-refresh', handleRefresh);
     return () => window.removeEventListener('game-refresh', handleRefresh);
-  }, []);
+  }, [refetchRound]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -94,10 +111,6 @@ function RouteComponent() {
     );
     return () => setCenterContent(null);
   }, [roundNumber, timeLeft, setCenterContent]);
-
-  if (!panoramaId) {
-    getRoundData();
-  }
   return (
     <div className="relative" style={{ height: 'calc(100vh - 72px)' }}>
       {/* Overlay loading screen with animation */}
@@ -115,11 +128,13 @@ function RouteComponent() {
       </div>
 
       <div className="w-full h-full bg-black">
-        <ReactPhotoSphereViewer
-          src={`http://localhost:5000/api/panorama/${panoramaId}`}
-          height="100%"
-          width="100%"
-        ></ReactPhotoSphereViewer>
+        {roundData && (
+          <ReactPhotoSphereViewer
+            src={`${API_URL}/panorama/${roundData.panoramaId}`}
+            height="100%"
+            width="100%"
+          ></ReactPhotoSphereViewer>
+        )}
       </div>
       <div
         className={`
@@ -135,20 +150,15 @@ function RouteComponent() {
             isEndRoundView={isEndRoundView}
             markerPosition={markerPosition}
             guessResult={guessResult}
-            onMapClick={(lat, lng) => setMarkerPosition([lat, lng])}
+            onMapClick={(lat, lng) => isEndRoundView ? null : setMarkerPosition([lat, lng])}
           />
         </ClientOnly>
         <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] z-[1000] transition-all duration-300 ease-in-out ${!isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <GuessButton onClick={async () => {
-            if (markerPosition) {
-              let coords = leafletToMinecraft(markerPosition[0], markerPosition[1]);
+          <GuessButton onClick={() => {
+            if (markerPosition && roundData) {
+              const coords = leafletToMinecraft(markerPosition[0], markerPosition[1]);
               console.log(`Guessing at Minecraft coords: x=${coords.x}, z=${coords.z}`);
-              let result = await postGuess(panoramaId!, coords.x, coords.z);
-              setGuessResult(result);
-              setIsEndRoundView(true);
-              setTimeout(() => {
-                confettiRef.current?.play();
-              }, 250);
+              guessMutation.mutate({ panoramaId: roundData.panoramaId, x: coords.x, z: coords.z });
             }
           }} />
         </div>
@@ -159,8 +169,8 @@ function RouteComponent() {
         <Lottie lottieRef={confettiRef} animationData={confettiAnimation} loop={false} autoPlay={false} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
         <h1 className="text-4xl font-bold">Score: {guessResult?.score}</h1>
         <div className='text-lg mt-2 text-center'>
-          <p>Distance: {guessResult?.distance}</p>
-          <p className='font-bold'>Actual Location: {guessResult?.town} ({guessResult?.actualX}, {guessResult?.actualZ})</p>
+          <p>Distance: {Math.round(guessResult?.distance!)}m</p>
+          <p className='font-bold'>Actual Location: {guessResult?.town} (X {guessResult?.actualX}, Z {guessResult?.actualZ})</p>
         </div>
         <Button variant={"outline"} className="mt-4" onClick={() => {
           // Reset for next round

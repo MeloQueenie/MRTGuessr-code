@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { CircleMarker, MapContainer, Marker, Polyline, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { CRS, Icon } from 'leaflet'
 import { leafletToMinecraft, formatMinecraftCoords, minecraftToLeaflet } from '@/lib/coordinates'
-import { GuessResult, pinpointUrl } from '@/lib/api'
+import { API_URL, GuessResult, pinpointUrl } from '@/lib/api'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet/dist/leaflet.js'
 
@@ -57,7 +57,7 @@ export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResul
       <MapClickHandler onMapClick={onMapClick} />
       <TileLayer
         attribution='&copy; MinecartRapidTransit'
-        url="http://localhost:5000/api/tiles/{z}/{x}/{y}.png"
+        url={API_URL + "/tiles/{z}/{x}/{y}.png"}
         tileSize={128}
         minZoom={0}
         maxZoom={8}
@@ -88,12 +88,12 @@ export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResul
         return (
           <>
             <Marker position={[leafletCoords.lat, leafletCoords.lng]} icon={circleIconMarker}>
-              <Popup>
+              {/*<Popup>
                 Actual location: {formatMinecraftCoords(mcCoords.x, mcCoords.z)}<br />
                 Distance: {guessResult.distance} blocks<br />
                 Score: {guessResult.score}<br />
                 Town: {guessResult.town}
-              </Popup>
+              </Popup>*/}
             </Marker>
             <Polyline positions={[[markerPosition![0], markerPosition![1]], [leafletCoords.lat, leafletCoords.lng]]} />
           </>

@@ -1,4 +1,4 @@
-export const BASE_URL = 'http://localhost:5000';
+export const BASE_URL = import.meta.env.PROD ? 'http://localhost:5000' : 'http://localhost:5000';
 export const API_URL = `${BASE_URL}/api`;
 
 export const guessButtonPartsUrl = {
@@ -19,23 +19,26 @@ export const pinpointUrl = {
   Square: `${BASE_URL}/graphics/pinpoint/MRTGuessr-PinpointLogo_Square.svg`,
 }
 
-export async function fetchRoundData() {
-  let res = await fetch(`${API_URL}/round`);
-  let data = await res.json();
-  return data;
+// --- Interfaces --- //
+export interface RoundData {
+  panoramaId: string;
 }
-
-
-export async function getPanoramaUrl(panoramaId: string) {
-  return `${API_URL}/panorama/${panoramaId}`;
-}
-
 export interface GuessResult {
   actualX: number;
   actualZ: number;
   distance: number;
   score: number;
   town: string;
+}
+
+export async function fetchRoundData(): Promise<RoundData> {
+  let res = await fetch(`${API_URL}/round`);
+  let data = await res.json();
+  return data;
+}
+
+export async function getPanoramaUrl(panoramaId: string) {
+  return `${API_URL}/panorama/${panoramaId}`;
 }
 
 export async function postGuess(panoramaId: string, guessX: number, guessZ: number): Promise<GuessResult> {

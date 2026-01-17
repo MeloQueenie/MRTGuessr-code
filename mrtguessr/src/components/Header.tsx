@@ -34,7 +34,7 @@ export default function Header() {
             <Menu size={24} />
           </button>
           {/* horizontal layout of logo icon and text */}
-          <Link to="/">
+          <Link to="/" viewTransition>
             <div className="ml-4 flex items-center gap-2">
               <img src={logoUrl.Text} alt="MRTGuessr" className="h-8 w-auto" />
             </div>
@@ -43,13 +43,6 @@ export default function Header() {
         <div className="flex items-center gap-4">
           {centerContent}
         </div>
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent('game-refresh'))}
-          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-          aria-label="Refresh"
-        >
-          <RefreshCw size={24} />
-        </button>
       </header>
 
       <aside

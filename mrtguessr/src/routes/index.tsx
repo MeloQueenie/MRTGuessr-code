@@ -13,7 +13,7 @@
 
   // You should have received a copy of the GNU Affero General Public License
   // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { logoUrl } from '@/lib/api'
 
 export const Route = createFileRoute('/')({ component: App })
@@ -38,12 +38,13 @@ function App() {
             Don't forget to ask Melody to write something for this section!
           </p>
           <div className="flex flex-col items-center gap-4">
-            <a
-              href="/game"
+            <Link
+              to="/game"
               className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
+              viewTransition
             >
               Play Now!
-            </a>
+            </Link>
           </div>
         </div>
       </section>
