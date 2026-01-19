@@ -121,13 +121,6 @@ function RouteComponent() {
         <img src={logoUrl.Full} alt="MRTGuessr Logo" className="w-128 mb-4" />
         <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
       </div>
-      {/* Game winning stats overlay, visible after 5 rounds complete */}
-      <div className={`absolute top-0 left-0 w-full h-full bg-black z-2000 flex flex-col justify-center items-center animate-all duration-500
-        ${roundNumber > 5 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} id="game-complete-screen">
-        <h1 className="text-5xl font-bold text-white mb-4">Game Complete!</h1>
-        <h2 className="text-3xl font-semibold text-white">Total Score: {totalScore}</h2>
-        <Button variant={"outline"} className="mt-8" onClick={resetAll}>Play Again <Repeat /></Button>
-      </div>
 
       <div className="w-full h-full bg-black">
         {roundData && (
@@ -166,24 +159,28 @@ function RouteComponent() {
         </div>
       </div>
       {/* Endgame view stats - a white background color rectangle below the map, rounded and height 20% */}
-      <div className={`absolute flex justify-center items-center flex-col
-        bottom-4 left-1/2 -translate-x-1/2 w-[98%] h-[22%] rounded-lg z-[1000] transition-all duration-300 ease-in-out bg-slate-200 p-4 ${isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`absolute flex justify-center items-center gap-8
+        bottom-4 left-1/2 -translate-x-1/2 w-[98%] h-[22%] rounded-lg z-[1000] transition-all duration-300 ease-in-out bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-2 border-slate-700 p-4 ${isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <Lottie lottieRef={confettiRef} animationData={confettiAnimation} loop={false} autoPlay={false} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
-        <h1 className="text-4xl font-bold">Score: {guessResult?.score}</h1>
-        <div className='text-lg mt-2 text-center'>
-          <p>Distance: {Math.round(guessResult?.distance!)}m</p>
-          <p className='font-bold'>Actual Location: {guessResult?.town} (X {guessResult?.actualX}, Z {guessResult?.actualZ})</p>
+        <div className="flex flex-col justify-center">
+          <h1 className="text-4xl font-bold text-emerald-400">Score: {guessResult?.score}</h1>
+          <div className='text-lg mt-2 text-slate-300'>
+            <p>Distance: {Math.round(guessResult?.distance!)}m</p>
+            <p className='font-bold text-white'>Actual Location: {guessResult?.town} (X {guessResult?.actualX}, Z {guessResult?.actualZ})</p>
+          </div>
         </div>
-        <Button variant={"outline"} className="mt-4" onClick={() => {
-          // Store the guess result before moving to next round
-          if (guessResult) {
-            setGuessResults((prev) => [...prev, guessResult]);
-          }
-          // Reset for next round
-          resetRound();
-          setRoundNumber((prev) => prev + 1);
-          setTotalScore((prev) => prev + (guessResult ? guessResult.score : 0));
-        }}>Next Round <ArrowRight /></Button>
+        <div className="flex items-center">
+          <Button variant={"outline"} size="lg" className="bg-white text-black border-white hover:bg-slate-200" onClick={() => {
+            // Store the guess result before moving to next round
+            if (guessResult) {
+              setGuessResults((prev) => [...prev, guessResult]);
+            }
+            // Reset for next round
+            resetRound();
+            setRoundNumber((prev) => prev + 1);
+            setTotalScore((prev) => prev + (guessResult ? guessResult.score : 0));
+          }}>Next Round <ArrowRight /></Button>
+        </div>
       </div>
     </div>
   )

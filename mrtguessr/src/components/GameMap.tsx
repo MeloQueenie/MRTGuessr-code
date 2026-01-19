@@ -118,7 +118,7 @@ export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResul
                 Town: {guessResult.town}
               </Popup>*/}
             </Marker>
-            <Polyline positions={[[markerPosition![0], markerPosition![1]], [leafletCoords.lat, leafletCoords.lng]]} />
+            <Polyline positions={[[markerPosition![0], markerPosition![1]], [leafletCoords.lat, leafletCoords.lng]]} color="black" dashArray="5, 10" />
           </>
         )
       })()}

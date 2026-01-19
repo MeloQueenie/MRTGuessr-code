@@ -34,6 +34,8 @@ export interface GuessResult {
   roundNumber: number;
 }
 
+// --- API Functions --- //
+
 export async function fetchRoundData(): Promise<RoundData> {
   let res = await fetch(`${API_URL}/round`);
   let data = await res.json();
