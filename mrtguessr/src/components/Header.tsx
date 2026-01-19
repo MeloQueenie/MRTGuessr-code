@@ -36,7 +36,7 @@ export default function Header() {
           {/* horizontal layout of logo icon and text */}
           <Link to="/" viewTransition>
             <div className="ml-4 flex items-center gap-2">
-              <img src={logoUrl.Text} alt="MRTGuessr" className="h-8 w-auto" />
+              <img src={logoUrl.Text} alt="MRTGuessr" className="h-4 md:h-8 w-auto" />
             </div>
           </Link>
         </div>

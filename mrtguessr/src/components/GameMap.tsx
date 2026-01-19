@@ -74,7 +74,7 @@ interface GameMapProps {
 
 export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResult, onMapClick }: GameMapProps) {
   return (
-    <MapContainer crs={CRS.Simple} center={[0, 0]} zoom={8} style={{ height: '100%', width: '100%' }}>
+    <MapContainer crs={CRS.Simple} center={[0, 0]} zoom={8} style={{ height: '100%', width: '100%' } }>
       <MapResizeHandler isExpanded={isExpanded} isEndRoundView={isEndRoundView} />
       <MapClickHandler onMapClick={onMapClick} />
       {guessResult && markerPosition && <AutoFitBounds markerPosition={markerPosition} guessResult={guessResult} />}

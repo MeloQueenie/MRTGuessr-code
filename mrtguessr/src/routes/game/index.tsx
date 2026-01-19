@@ -118,7 +118,7 @@ function RouteComponent() {
       {/* Overlay loading screen with animation */}
       <div className={`absolute top-0 left-0 w-full h-full bg-black z-1500 flex flex-col justify-center items-center animate-all duration-500
         ${showLoadingScreen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} id="loading-screen">
-        <img src={logoUrl.Full} alt="MRTGuessr Logo" className="w-128 mb-4" />
+        <img src={logoUrl.Full} alt="MRTGuessr Logo" className="w-64 md:w-128 mb-4" />
         <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
       </div>
 
@@ -128,13 +128,16 @@ function RouteComponent() {
             src={`${API_URL}/panorama/${roundData.panoramaId}`}
             height="100%"
             width="100%"
+            navbar={false}
           ></ReactPhotoSphereViewer>
         )}
       </div>
       <div
         className={`
-          absolute ${isEndRoundView ? `bottom-[25%] right-4 w-[98%] h-[80%]` : `bottom-15 right-4 w-[25%] h-[25%] hover:w-[50%] hover:h-[50%]`}
-           bg-gray-900 border-2 border-gray-700 rounded-lg shadow-2xl transition-all duration-300 ease-in-out overflow-hidden z-10
+          absolute ${isEndRoundView
+            ? `bottom-[30%] md:bottom-[25%] left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-4 w-[95%] md:w-[98%] h-[60%] md:h-[80%] rounded-lg`
+            : `bottom-0 md:bottom-4 md:left-1/2 md:-translate-x-1/2 md:left-auto md:translate-x-0 md:right-4 w-[100%] md:w-[25%] h-[35%] md:h-[25%] md:hover:w-[50%] md:hover:h-[50%]`}
+           bg-gray-900 border-2 border-gray-700 md:rounded-lg shadow-2xl transition-all duration-300 ease-in-out overflow-hidden z-10
         `}
         onMouseEnter={() => setIsMapExpanded(true)}
         onMouseLeave={() => setIsMapExpanded(false)}
@@ -148,7 +151,7 @@ function RouteComponent() {
             onMapClick={(lat, lng) => isEndRoundView ? null : setMarkerPosition([lat, lng])}
           />
         </ClientOnly>
-        <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] z-[1000] transition-all duration-300 ease-in-out ${!isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] z-[1000] scale-75 md:scale-100 transition-all duration-300 ease-in-out ${!isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <GuessButton onClick={() => {
             if (markerPosition && roundData) {
               const coords = leafletToMinecraft(markerPosition[0], markerPosition[1]);
@@ -159,12 +162,12 @@ function RouteComponent() {
         </div>
       </div>
       {/* Endgame view stats - a white background color rectangle below the map, rounded and height 20% */}
-      <div className={`absolute flex justify-center items-center gap-8
-        bottom-4 left-1/2 -translate-x-1/2 w-[98%] h-[22%] rounded-lg z-[1000] transition-all duration-300 ease-in-out bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-2 border-slate-700 p-4 ${isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`absolute flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8
+        bottom-4 left-1/2 -translate-x-1/2 w-[95%] md:w-[98%] h-auto md:h-[22%] rounded-lg z-[1000] transition-all duration-300 ease-in-out bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-2 border-slate-700 p-4 md:p-4 ${isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <Lottie lottieRef={confettiRef} animationData={confettiAnimation} loop={false} autoPlay={false} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
-        <div className="flex flex-col justify-center">
-          <h1 className="text-4xl font-bold text-emerald-400">Score: {guessResult?.score}</h1>
-          <div className='text-lg mt-2 text-slate-300'>
+        <div className="flex flex-col justify-center text-center">
+          <h1 className="text-2xl md:text-4xl font-bold text-emerald-400">Score: {guessResult?.score}</h1>
+          <div className='text-sm md:text-lg mt-2 text-slate-300'>
             <p>Distance: {Math.round(guessResult?.distance!)}m</p>
             <p className='font-bold text-white'>Actual Location: {guessResult?.town} (X {guessResult?.actualX}, Z {guessResult?.actualZ})</p>
           </div>
