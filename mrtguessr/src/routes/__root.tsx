@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Header from '../components/Header'
 import { HeaderProvider } from '../contexts/HeaderContext'
 
-import appCss from '../styles.css?url'
+import '../styles.css'
 import { logoUrl } from '@/lib/api'
 
 const queryClient = new QueryClient({
@@ -47,12 +47,6 @@ export const Route = createRootRoute({
       { name: 'twitter:title', content: "MRTGuessr" },
       { name: 'twitter:description', content: description },
       { name: 'twitter:image', content: logoUrl.Full },
-    ],
-    links: [
-      {
-        rel: 'stylesheet',
-        href: appCss,
-      },
     ],
   }),
 
