@@ -8,4 +8,9 @@ Run the game locally by running
 docker compose up --build
 ```
 
+## Architecture
+The backend for MRTGuessr is a Python Flask server which is responsible for serving round data, game assets/graphics, and calculating scores. 
+
+The frontend is a React app built with the TanStack Start framework (incl. Tailwind, Shadcn, TanStack Query, etc).
+
 > Some of the code in this repo was built wih Claude Code

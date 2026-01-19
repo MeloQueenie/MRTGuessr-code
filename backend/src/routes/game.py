@@ -29,6 +29,7 @@ def submit_guess():
     Expects JSON body with:
     {
         "panoramaId": 42,
+        "roundNumber": 1,
         "guessX": 100.5,
         "guessZ": 200.5
     }
@@ -39,6 +40,8 @@ def submit_guess():
         "score": 4500,
         "actualX": 48.5,
         "actualZ": 214.5,
+        "guessX: 100.5,
+        "guessZ: 200.5,
         "town": "Central City"
     }
     """
@@ -47,6 +50,7 @@ def submit_guess():
     # Get the guess data from the request
     data = request.json
     panorama_id = data.get('panoramaId')
+    round_number = data.get('roundNumber')
     guess_x = data.get('guessX')
     guess_z = data.get('guessZ')
 
@@ -73,5 +77,8 @@ def submit_guess():
         'score': score,
         'actualX': actual_x,
         'actualZ': actual_z,
+        'guessX': guess_x,
+        'guessZ': guess_z,
+        'roundNumber': round_number,
         'town': actual['town']
     })

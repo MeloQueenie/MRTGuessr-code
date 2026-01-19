@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GameIndexRouteImport } from './routes/game/index'
+import { Route as GameResultsResultDataRouteImport } from './routes/game/results.$resultData'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const GameIndexRoute = GameIndexRouteImport.update({
   path: '/game/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GameResultsResultDataRoute = GameResultsResultDataRouteImport.update({
+  id: '/game/results/$resultData',
+  path: '/game/results/$resultData',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/game': typeof GameIndexRoute
+  '/game/results/$resultData': typeof GameResultsResultDataRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/game': typeof GameIndexRoute
+  '/game/results/$resultData': typeof GameResultsResultDataRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/game/': typeof GameIndexRoute
+  '/game/results/$resultData': typeof GameResultsResultDataRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/game'
+  fullPaths: '/' | '/game' | '/game/results/$resultData'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/game'
-  id: '__root__' | '/' | '/game/'
+  to: '/' | '/game' | '/game/results/$resultData'
+  id: '__root__' | '/' | '/game/' | '/game/results/$resultData'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GameIndexRoute: typeof GameIndexRoute
+  GameResultsResultDataRoute: typeof GameResultsResultDataRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GameIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/game/results/$resultData': {
+      id: '/game/results/$resultData'
+      path: '/game/results/$resultData'
+      fullPath: '/game/results/$resultData'
+      preLoaderRoute: typeof GameResultsResultDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GameIndexRoute: GameIndexRoute,
+  GameResultsResultDataRoute: GameResultsResultDataRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

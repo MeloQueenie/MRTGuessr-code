@@ -24,11 +24,14 @@ export interface RoundData {
   panoramaId: string;
 }
 export interface GuessResult {
+  guessX: number;
+  guessZ: number;
   actualX: number;
   actualZ: number;
   distance: number;
   score: number;
   town: string;
+  roundNumber: number;
 }
 
 export async function fetchRoundData(): Promise<RoundData> {
@@ -41,7 +44,7 @@ export async function getPanoramaUrl(panoramaId: string) {
   return `${API_URL}/panorama/${panoramaId}`;
 }
 
-export async function postGuess(panoramaId: string, guessX: number, guessZ: number): Promise<GuessResult> {
+export async function postGuess(panoramaId: string, roundNumber: number, guessX: number, guessZ: number): Promise<GuessResult> {
   let res = await fetch(`${API_URL}/guess`, {
     method: 'POST',
     headers: {
@@ -50,6 +53,7 @@ export async function postGuess(panoramaId: string, guessX: number, guessZ: numb
 
     body: JSON.stringify({
       panoramaId: panoramaId,
+      roundNumber: roundNumber,
       guessX: guessX,
       guessZ: guessZ,
     }),

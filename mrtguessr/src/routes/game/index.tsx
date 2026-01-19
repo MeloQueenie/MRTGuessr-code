@@ -1,16 +1,17 @@
-import { ClientOnly, createFileRoute } from '@tanstack/react-router'
+import { ClientOnly, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ReactPhotoSphereViewer } from 'react-photo-sphere-viewer'
 import { useState, useEffect, useRef } from 'react'
 import Lottie, { LottieRefCurrentProps } from 'lottie-react'
 import { Button } from '@/components/ui/button'
+import { ArrowRight, Repeat } from 'lucide-react'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { fetchRoundData, postGuess, GuessResult, logoUrl, API_URL } from '@/lib/api'
 import { useHeader } from '@/contexts/HeaderContext'
 import { GameMap } from '@/components/GameMap'
 import GuessButton from '@/components/GuessButton'
 import { leafletToMinecraft } from '@/lib/coordinates'
 import confettiAnimation from '@/components/Confetti.json'
-import { ArrowRight, Repeat } from 'lucide-react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+
 
 export const Route = createFileRoute('/game/')({
   ssr: false,
@@ -41,15 +42,16 @@ function RouteComponent() {
   const [isEndRoundView, setIsEndRoundView] = useState(false);
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const confettiRef = useRef<LottieRefCurrentProps>(null);
-
+  const [guessResults, setGuessResults] = useState<GuessResult[]>([]);
+  const navigate = useNavigate({from: "/game"});
   const { data: roundData, refetch: refetchRound } = useQuery({
     queryKey: ['roundData'],
     queryFn: fetchRoundData,
   })
 
   const guessMutation = useMutation({
-    mutationFn: ({ panoramaId, x, z }: { panoramaId: string; x: number; z: number }) =>
-      postGuess(panoramaId, x, z),
+    mutationFn: ({ panoramaId, roundNumber, guessX, guessZ }: { panoramaId: string; roundNumber: number; guessX: number; guessZ: number }) =>
+      postGuess(panoramaId, roundNumber, guessX, guessZ),
     onSuccess: (result) => {
       setGuessResult(result)
       setIsEndRoundView(true)
@@ -67,6 +69,14 @@ function RouteComponent() {
     }
   }, [roundData])
 
+  useEffect(() => {
+    if (roundNumber > 5) {
+      // Game complete, navigate to results page with encoded results
+      const encodedResults = btoa(JSON.stringify(guessResults));
+      navigate({ to: `/game/results/${encodedResults}` });
+    }
+  }, [roundNumber, navigate, guessResults]);
+
   async function resetAll() {
     setRoundNumber(1);
     setTotalScore(0);
@@ -76,6 +86,7 @@ function RouteComponent() {
     setGuessResult(null);
     setIsEndRoundView(false);
     setShowLoadingScreen(true);
+    setGuessResults([]);
     confettiRef.current?.stop();
     await refetchRound();
   }
@@ -88,15 +99,6 @@ function RouteComponent() {
     confettiRef.current?.stop();
     refetchRound();
   }
-
-  useEffect(() => {
-    const handleRefresh = () => {
-      refetchRound();
-    };
-
-    window.addEventListener('game-refresh', handleRefresh);
-    return () => window.removeEventListener('game-refresh', handleRefresh);
-  }, [refetchRound]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -158,7 +160,7 @@ function RouteComponent() {
             if (markerPosition && roundData) {
               const coords = leafletToMinecraft(markerPosition[0], markerPosition[1]);
               console.log(`Guessing at Minecraft coords: x=${coords.x}, z=${coords.z}`);
-              guessMutation.mutate({ panoramaId: roundData.panoramaId, x: coords.x, z: coords.z });
+              guessMutation.mutate({ panoramaId: roundData.panoramaId, roundNumber: roundNumber, guessX: coords.x, guessZ: coords.z });
             }
           }} />
         </div>
@@ -173,6 +175,10 @@ function RouteComponent() {
           <p className='font-bold'>Actual Location: {guessResult?.town} (X {guessResult?.actualX}, Z {guessResult?.actualZ})</p>
         </div>
         <Button variant={"outline"} className="mt-4" onClick={() => {
+          // Store the guess result before moving to next round
+          if (guessResult) {
+            setGuessResults((prev) => [...prev, guessResult]);
+          }
           // Reset for next round
           resetRound();
           setRoundNumber((prev) => prev + 1);

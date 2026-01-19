@@ -32,6 +32,28 @@ function MapResizeHandler({ isExpanded, isEndRoundView }: { isExpanded: boolean,
   return null
 }
 
+function AutoFitBounds({ markerPosition, guessResult }: { markerPosition: [number, number] | null, guessResult: GuessResult | null }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (markerPosition && guessResult) {
+      const actualLeaflet = minecraftToLeaflet(guessResult.actualX, guessResult.actualZ)
+      const bounds: [[number, number], [number, number]] = [
+        [markerPosition[0], markerPosition[1]],
+        [actualLeaflet.lat, actualLeaflet.lng]
+      ]
+
+      const timer = setTimeout(() => {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 8 })
+      }, 100)
+
+      return () => clearTimeout(timer)
+    }
+  }, [markerPosition, guessResult, map])
+
+  return null
+}
+
 function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
   useMapEvents({
     click(e) {
@@ -55,6 +77,7 @@ export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResul
     <MapContainer crs={CRS.Simple} center={[0, 0]} zoom={8} style={{ height: '100%', width: '100%' }}>
       <MapResizeHandler isExpanded={isExpanded} isEndRoundView={isEndRoundView} />
       <MapClickHandler onMapClick={onMapClick} />
+      {guessResult && markerPosition && <AutoFitBounds markerPosition={markerPosition} guessResult={guessResult} />}
       <TileLayer
         attribution='&copy; MinecartRapidTransit'
         url={API_URL + "/tiles/{z}/{x}/{y}.png"}
