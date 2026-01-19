@@ -12,6 +12,7 @@
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
+    "@photo-sphere-viewer/compass-plugin": "^5.14.1",
     "@photo-sphere-viewer/core": "^5.14.1",
     "@radix-ui/react-slot": "^1.2.4",
     "@tailwindcss/vite": "^4.0.6",

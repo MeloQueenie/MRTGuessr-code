@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@photo-sphere-viewer/compass-plugin':
+        specifier: ^5.14.1
+        version: 5.14.1(@photo-sphere-viewer/core@5.14.1)
       '@photo-sphere-viewer/core':
         specifier: ^5.14.1
         version: 5.14.1
@@ -790,6 +793,11 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [win32]
+
+  '@photo-sphere-viewer/compass-plugin@5.14.1':
+    resolution: {integrity: sha512-zuGhxpdqhh0cwoWsnwyx8996Qyf0eOWwAX4C8vrMt/YEHbJu1tEAnxvWhdW+yOOz20NZiNRR+YcwHtgNGdxr0A==}
+    peerDependencies:
+      '@photo-sphere-viewer/core': 5.14.1
 
   '@photo-sphere-viewer/core@5.14.1':
     resolution: {integrity: sha512-qrwUudrX9YZms4c2shlY/H3jUP0oh9FyGEqIDr/95ulNZgKbhQ6C/i8zDQ4j8ooFR4+z5FDORQtGvLgPyX8VCA==}
@@ -3466,6 +3474,10 @@ snapshots:
 
   '@oxc-transform/binding-win32-x64-msvc@0.108.0':
     optional: true
+
+  '@photo-sphere-viewer/compass-plugin@5.14.1(@photo-sphere-viewer/core@5.14.1)':
+    dependencies:
+      '@photo-sphere-viewer/core': 5.14.1
 
   '@photo-sphere-viewer/core@5.14.1':
     dependencies:

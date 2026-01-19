@@ -1,9 +1,10 @@
 import { ClientOnly, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ReactPhotoSphereViewer } from 'react-photo-sphere-viewer'
+import { CompassPlugin } from '@photo-sphere-viewer/compass-plugin'
 import { useState, useEffect, useRef } from 'react'
 import Lottie, { LottieRefCurrentProps } from 'lottie-react'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Repeat } from 'lucide-react'
+import { ArrowRight, Compass, Repeat } from 'lucide-react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { fetchRoundData, postGuess, GuessResult, logoUrl, API_URL } from '@/lib/api'
 import { useHeader } from '@/contexts/HeaderContext'
@@ -12,6 +13,7 @@ import GuessButton from '@/components/GuessButton'
 import { leafletToMinecraft } from '@/lib/coordinates'
 import confettiAnimation from '@/components/Confetti.json'
 
+import '@photo-sphere-viewer/compass-plugin/index.css';
 
 export const Route = createFileRoute('/game/')({
   ssr: false,
@@ -125,7 +127,14 @@ function RouteComponent() {
       <div className="w-full h-full bg-black">
         {roundData && (
           <ReactPhotoSphereViewer
+            key={roundData.panoramaId}
             src={`${API_URL}/panorama/${roundData.panoramaId}`}
+            plugins={[
+              CompassPlugin.withConfig({
+                hotspots: [
+                ],
+              }),
+            ]}
             height="100%"
             width="100%"
             navbar={false}
@@ -137,7 +146,7 @@ function RouteComponent() {
           absolute ${isEndRoundView
             ? `bottom-[30%] md:bottom-[25%] left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-4 w-[95%] md:w-[98%] h-[60%] md:h-[80%] rounded-lg`
             : `bottom-0 md:bottom-4 md:left-1/2 md:-translate-x-1/2 md:left-auto md:translate-x-0 md:right-4 w-[100%] md:w-[25%] h-[35%] md:h-[25%] md:hover:w-[50%] md:hover:h-[50%]`}
-           bg-gray-900 border-2 border-gray-700 md:rounded-lg shadow-2xl transition-all duration-300 ease-in-out overflow-hidden z-10
+           bg-gray-900 border-2 border-gray-700 md:rounded-lg shadow-2xl transition-all duration-300 ease-in-out overflow-hidden z-100
         `}
         onMouseEnter={() => setIsMapExpanded(true)}
         onMouseLeave={() => setIsMapExpanded(false)}
