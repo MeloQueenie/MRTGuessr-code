@@ -15,13 +15,19 @@ export const logoUrl = {
 }
 
 export const pinpointUrl = {
-  Circle: `${BASE_URL}/graphics/pinpoint/MRTGuessr-PinpointLogo_Circle.svg`,
-  Square: `${BASE_URL}/graphics/pinpoint/MRTGuessr-PinpointLogo_Square.svg`,
+  Actual: `${BASE_URL}/graphics/pinpoint/MRTGuessr-PinpointLogo_Actual.svg`,
+  Guess: `${BASE_URL}/graphics/pinpoint/MRTGuessr-PinpointLogo_Guess.svg`,
 }
 
 // --- Interfaces --- //
+export interface StartData {
+  uuid: string;
+}
 export interface RoundData {
-  panoramaId: string;
+  panoramaId: number;
+  roundNumber: number;
+  createdAt: string;
+  error?: string;
 }
 export interface GuessResult {
   guessX: number;
@@ -33,34 +39,54 @@ export interface GuessResult {
   town: string;
   roundNumber: number;
 }
+export interface ResultsData {
+  roundNumber: number;
+  createdAt: string;
+  completedAt: string | null;
+  results: GuessResult[];
+}
 
 // --- API Functions --- //
 
-export async function fetchRoundData(): Promise<RoundData> {
-  let res = await fetch(`${API_URL}/round`);
+export async function startGame(): Promise<StartData> {
+  let res = await fetch(`${API_URL}/game/start`,
+    { method: 'POST' }
+  );
   let data = await res.json();
   return data;
 }
 
-export async function getPanoramaUrl(panoramaId: string) {
+export async function fetchRoundData(uuid: string): Promise<RoundData> {
+  let res = await fetch(`${API_URL}/game/${uuid}/round`,
+    { method: 'POST' }
+  );
+  let data = await res.json();
+  return data;
+}
+
+export async function getPanoramaUrl(panoramaId: number) {
   return `${API_URL}/panorama/${panoramaId}`;
 }
 
-export async function postGuess(panoramaId: string, roundNumber: number, guessX: number, guessZ: number): Promise<GuessResult> {
-  let res = await fetch(`${API_URL}/guess`, {
+export async function postGuess(uuid: string, guessX: number, guessZ: number): Promise<GuessResult> {
+  let res = await fetch(`${API_URL}/game/${uuid}/guess`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
 
     body: JSON.stringify({
-      panoramaId: panoramaId,
-      roundNumber: roundNumber,
       guessX: guessX,
       guessZ: guessZ,
     }),
   });
   let data = await res.json();
   console.log(data);
+  return data;
+}
+
+export async function fetchResults(uuid: string): Promise<ResultsData> {
+  let res = await fetch(`${API_URL}/game/${uuid}/results`);
+  let data = await res.json();
   return data;
 }

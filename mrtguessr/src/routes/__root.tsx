@@ -47,6 +47,17 @@ export const Route = createRootRoute({
       { name: 'twitter:title', content: "MRTGuessr" },
       { name: 'twitter:description', content: description },
       { name: 'twitter:image', content: logoUrl.Full },
+
+      // PWA Manifest
+      { rel: 'manifest', href: '/manifest.json', as: 'document' },
+      // mobile-web-app-capable
+      { name: 'mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+    ],
+    links: [
+      { rel: 'icon', href: '/favicon.ico' },
+      { rel: 'apple-touch-icon', href: '/icons/apple-touch-icon.png', sizes: '180x180' },
     ],
   }),
 

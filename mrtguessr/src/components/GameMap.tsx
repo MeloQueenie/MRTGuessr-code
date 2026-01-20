@@ -7,14 +7,14 @@ import { API_URL, GuessResult, pinpointUrl } from '@/lib/api'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet/dist/leaflet.js'
 
-const circleIconMarker = new Icon({
-  iconUrl: pinpointUrl.Circle,
+const actualIconMarker = new Icon({
+  iconUrl: pinpointUrl.Actual,
   iconSize: [25, 25],
   iconAnchor: [12.5, 12.5],
   popupAnchor: [0,-10],
 });
-const squareIconMarker = new Icon({
-  iconUrl: pinpointUrl.Square,
+const guessIconMarker = new Icon({
+  iconUrl: pinpointUrl.Guess,
   iconSize: [25, 25],
   iconAnchor: [12.5, 12.5],
   popupAnchor: [0,-10],
@@ -98,7 +98,7 @@ export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResul
       {markerPosition && (() => {
         const mcCoords = leafletToMinecraft(markerPosition[0], markerPosition[1])
         return (
-          <Marker position={markerPosition} icon={squareIconMarker}>
+          <Marker position={markerPosition} icon={guessIconMarker}>
             <Popup>
               Your guess: {formatMinecraftCoords(mcCoords.x, mcCoords.z)}
             </Popup>
@@ -111,7 +111,7 @@ export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResul
         console.log('Actual location in Leaflet coords:', leafletCoords);
         return (
           <>
-            <Marker position={[leafletCoords.lat, leafletCoords.lng]} icon={circleIconMarker}>
+            <Marker position={[leafletCoords.lat, leafletCoords.lng]} icon={actualIconMarker}>
               {/*<Popup>
                 Actual location: {formatMinecraftCoords(mcCoords.x, mcCoords.z)}<br />
                 Distance: {guessResult.distance} blocks<br />

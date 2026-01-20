@@ -10,53 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as GameIndexRouteImport } from './routes/game/index'
-import { Route as GameResultsResultDataRouteImport } from './routes/game/results.$resultData'
+import { Route as GameUuidRouteImport } from './routes/game/$uuid'
+import { Route as GameResultsUuidRouteImport } from './routes/game/results.$uuid'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GameIndexRoute = GameIndexRouteImport.update({
-  id: '/game/',
-  path: '/game/',
+const GameUuidRoute = GameUuidRouteImport.update({
+  id: '/game/$uuid',
+  path: '/game/$uuid',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GameResultsResultDataRoute = GameResultsResultDataRouteImport.update({
-  id: '/game/results/$resultData',
-  path: '/game/results/$resultData',
+const GameResultsUuidRoute = GameResultsUuidRouteImport.update({
+  id: '/game/results/$uuid',
+  path: '/game/results/$uuid',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/game': typeof GameIndexRoute
-  '/game/results/$resultData': typeof GameResultsResultDataRoute
+  '/game/$uuid': typeof GameUuidRoute
+  '/game/results/$uuid': typeof GameResultsUuidRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/game': typeof GameIndexRoute
-  '/game/results/$resultData': typeof GameResultsResultDataRoute
+  '/game/$uuid': typeof GameUuidRoute
+  '/game/results/$uuid': typeof GameResultsUuidRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/game/': typeof GameIndexRoute
-  '/game/results/$resultData': typeof GameResultsResultDataRoute
+  '/game/$uuid': typeof GameUuidRoute
+  '/game/results/$uuid': typeof GameResultsUuidRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/game' | '/game/results/$resultData'
+  fullPaths: '/' | '/game/$uuid' | '/game/results/$uuid'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/game' | '/game/results/$resultData'
-  id: '__root__' | '/' | '/game/' | '/game/results/$resultData'
+  to: '/' | '/game/$uuid' | '/game/results/$uuid'
+  id: '__root__' | '/' | '/game/$uuid' | '/game/results/$uuid'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  GameIndexRoute: typeof GameIndexRoute
-  GameResultsResultDataRoute: typeof GameResultsResultDataRoute
+  GameUuidRoute: typeof GameUuidRoute
+  GameResultsUuidRoute: typeof GameResultsUuidRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -68,18 +68,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/game/': {
-      id: '/game/'
-      path: '/game'
-      fullPath: '/game'
-      preLoaderRoute: typeof GameIndexRouteImport
+    '/game/$uuid': {
+      id: '/game/$uuid'
+      path: '/game/$uuid'
+      fullPath: '/game/$uuid'
+      preLoaderRoute: typeof GameUuidRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/game/results/$resultData': {
-      id: '/game/results/$resultData'
-      path: '/game/results/$resultData'
-      fullPath: '/game/results/$resultData'
-      preLoaderRoute: typeof GameResultsResultDataRouteImport
+    '/game/results/$uuid': {
+      id: '/game/results/$uuid'
+      path: '/game/results/$uuid'
+      fullPath: '/game/results/$uuid'
+      preLoaderRoute: typeof GameResultsUuidRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -87,8 +87,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  GameIndexRoute: GameIndexRoute,
-  GameResultsResultDataRoute: GameResultsResultDataRoute,
+  GameUuidRoute: GameUuidRoute,
+  GameResultsUuidRoute: GameResultsUuidRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

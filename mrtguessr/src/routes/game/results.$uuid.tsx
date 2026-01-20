@@ -1,35 +1,33 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ClientOnly } from '@tanstack/react-router'
-import { GuessResult, logoUrl } from '@/lib/api'
+import { useQuery } from '@tanstack/react-query'
+import { fetchResults, GuessResult, logoUrl } from '@/lib/api'
 import { GameMap } from '@/components/GameMap'
 import { minecraftToLeaflet } from '@/lib/coordinates'
 import { Button } from '@/components/ui/button'
 import { Repeat, Share2 } from 'lucide-react'
 import { useState } from 'react'
 
-export const Route = createFileRoute('/game/results/$resultData')({
+export const Route = createFileRoute('/game/results/$uuid')({
   ssr: false,
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { resultData } = Route.useParams()
+  const { uuid } = Route.useParams()
   const navigate = useNavigate()
   const [copySuccess, setCopySuccess] = useState(false)
+  const { data: resultData, isLoading } = useQuery({
+    queryKey: ['resultsData', uuid],
+    queryFn: () => fetchResults(uuid),
+  });
 
-  let decodedResultData: GuessResult[];
-  try {
-    const decoded = atob(resultData);
-    decodedResultData = JSON.parse(decoded);
-    if (!Array.isArray(decodedResultData) || decodedResultData.length !== 5) {
-      throw new Error('Invalid result data');
-    }
-  } catch (e) {
-    return <div className="bg-black text-white text-4xl flex items-center justify-center h-[93.5vh]">Invalid result data</div>
+  if (isLoading) {
+    return <div className="bg-black text-white text-4xl flex items-center justify-center h-[93.5vh]">Loading results...</div>
   }
 
-  const totalScore = decodedResultData.reduce((sum, result) => sum + result.score, 0);
-
+  const totalScore = resultData?.results.reduce((sum, result) => sum + result.score, 0) ?? 0;
+  
   const handleShare = async () => {
     const url = window.location.href;
     try {
@@ -58,7 +56,7 @@ function RouteComponent() {
 
         {/* Results Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {decodedResultData.map((result, index) => {
+          {resultData.results.map((result, index) => {
             const guessLeaflet = minecraftToLeaflet(result.guessX, result.guessZ);
             const markerPosition: [number, number] = [guessLeaflet.lat, guessLeaflet.lng];
 
@@ -95,10 +93,10 @@ function RouteComponent() {
           <Button
             variant="outline"
             size="lg"
-            onClick={() => navigate({ to: '/game' })}
+            onClick={() => navigate({ to: '/' })}
             className="bg-slate-800 border-slate-600 hover:bg-slate-700"
           >
-            <Repeat className="mr-2" /> Play Again
+            <Repeat className="mr-2" /> Back to Home
           </Button>
           <Button
             variant="outline"

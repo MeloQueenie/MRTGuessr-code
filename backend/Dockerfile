@@ -1,4 +1,5 @@
 FROM python:3.14-slim
+ENV PYTHONUNBUFFERED=1
 
 RUN adduser --system --uid 1000 appuser
 

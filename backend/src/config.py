@@ -12,3 +12,7 @@ CACHE_TTL_SECONDS = 72 * 60 * 60  # 72 hours
 # Dynmap configuration
 DYNMAP_BASE = "https://dynmap.minecartrapidtransit.net/main/tiles/new/flat"
 
+# Database configuration
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://localhost/mrtguessr')
+
+print(f"Using database URL: {DATABASE_URL}")

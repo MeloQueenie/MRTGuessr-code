@@ -13,12 +13,22 @@
 
   // You should have received a copy of the GNU Affero General Public License
   // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { logoUrl } from '@/lib/api'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
+import { logoUrl, startGame } from '@/lib/api'
 
 export const Route = createFileRoute('/')({component: App })
 
 function App() {
+  const navigate = useNavigate({
+    from: "/"
+  });
+  const {data: startData, refetch: refetchStart, isFetching: isLoading} = useQuery({
+    queryKey: ['startGame'],
+    queryFn: startGame,
+    enabled: false,
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
       <section className="relative py-20 px-6 text-center overflow-hidden">
@@ -27,7 +37,7 @@ function App() {
           <div className="flex items-center justify-center gap-6 mb-6">
             <img
               src={logoUrl.Full}
-              alt="TanStack Logo"
+              alt="MRTGuessr Logo"
               className="w-[50%] h-auto mx-auto"
             />
           </div>
@@ -38,13 +48,18 @@ function App() {
             Don't forget to ask Melody to write something for this section!
           </p>
           <div className="flex flex-col items-center gap-4">
-            <Link
-              to="/game"
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
-              viewTransition
+            <div
+              onClick={() => {
+                refetchStart().then(({data}) => {
+                  if (data && data.uuid) {
+                    navigate({ to: `/game/${data.uuid}`, viewTransition: true });                    
+                  }
+                });
+              }}
+              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50 select-none cursor-pointer"
             >
               Play Now!
-            </Link>
+            </div>
           </div>
         </div>
       </section>

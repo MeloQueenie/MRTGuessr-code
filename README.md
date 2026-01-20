@@ -9,7 +9,7 @@ docker compose up --build
 ```
 
 ## Architecture
-The backend for MRTGuessr is a Python Flask server which is responsible for serving round data, game assets/graphics, and calculating scores. 
+The backend for MRTGuessr is a Python Flask server which is responsible for serving round data, game assets/graphics, and calculating scores. It uses PostgreSQL as the database.
 
 The frontend is a React app built with the TanStack Start framework (incl. Tailwind, Shadcn, TanStack Query, etc).
 

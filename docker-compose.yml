@@ -1,23 +1,55 @@
 services:
-  nginx:
-    image: nginx:latest
-    ports:
-      - "3000:80"
+  db:
+    image: postgres:18
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./db:/var/lib/postgresql
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      
+    depends_on:
+      db:
+        condition: service_healthy
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    expose:
+      - "5000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    volumes:
+      - ./backend/MRTGuessr-assets:/app/MRTGuessr-assets:ro
+      - ./backend/cache:/app/cache
     restart: unless-stopped
     depends_on:
-      frontend:
-        condition: service_healthy
-      backend:
+      db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/nginx-health"]
+      test: ["CMD", "python", "-c", "import requests; response = requests.get('http://localhost:5000/health'); exit(0) if response.status_code == 200 else exit(1)"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
-
+      start_period: 40s
   frontend:
     build:
       context: ./mrtguessr
@@ -36,22 +68,27 @@ services:
       start_period: 40s
     depends_on:
       - backend
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    expose:
-      - "5000"
-    environment:
-      - NODE_ENV=production
+  nginx:
+    image: nginx:latest
+    ports:
+      - "3000:80"
     volumes:
-      - ./backend/MRTGuessr-assets:/app/MRTGuessr-assets:ro
-      - ./backend/cache:/app/cache
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; response = requests.get('http://localhost:5000/health'); exit(0) if response.status_code == 200 else exit(1)"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/nginx-health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 10s
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - nginx

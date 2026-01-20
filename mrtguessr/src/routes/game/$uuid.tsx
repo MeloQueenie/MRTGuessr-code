@@ -15,7 +15,7 @@ import confettiAnimation from '@/components/Confetti.json'
 
 import '@photo-sphere-viewer/compass-plugin/index.css';
 
-export const Route = createFileRoute('/game/')({
+export const Route = createFileRoute('/game/$uuid')({
   ssr: false,
   component: RouteComponent,
 })
@@ -34,8 +34,8 @@ function HeaderContent({ roundNumber, timeLeft }: { roundNumber: number; timeLef
 }
 
 function RouteComponent() {
+  const { uuid } = Route.useParams()
   const { setCenterContent } = useHeader()
-  const [roundNumber, setRoundNumber] = useState(1);
   const [totalScore, setTotalScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -44,16 +44,17 @@ function RouteComponent() {
   const [isEndRoundView, setIsEndRoundView] = useState(false);
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const confettiRef = useRef<LottieRefCurrentProps>(null);
-  const [guessResults, setGuessResults] = useState<GuessResult[]>([]);
-  const navigate = useNavigate({from: "/game"});
-  const { data: roundData, refetch: refetchRound } = useQuery({
-    queryKey: ['roundData'],
-    queryFn: fetchRoundData,
+  const navigate = useNavigate({from: "/game/$uuid"});
+
+  const { data: roundData, refetch: refetchRound, isError } = useQuery({
+    queryKey: ['roundData', uuid],
+    queryFn: () => fetchRoundData(uuid),
   })
+  const roundNumber = roundData?.roundNumber || 1;
 
   const guessMutation = useMutation({
-    mutationFn: ({ panoramaId, roundNumber, guessX, guessZ }: { panoramaId: string; roundNumber: number; guessX: number; guessZ: number }) =>
-      postGuess(panoramaId, roundNumber, guessX, guessZ),
+    mutationFn: ({ guessX, guessZ }: { guessX: number; guessZ: number }) =>
+      postGuess(uuid, guessX, guessZ),
     onSuccess: (result) => {
       setGuessResult(result)
       setIsEndRoundView(true)
@@ -61,7 +62,7 @@ function RouteComponent() {
         confettiRef.current?.play()
       }, 250)
     },
-  })
+  });
 
   useEffect(() => {
     if (roundData) {
@@ -71,16 +72,7 @@ function RouteComponent() {
     }
   }, [roundData])
 
-  useEffect(() => {
-    if (roundNumber > 5) {
-      // Game complete, navigate to results page with encoded results
-      const encodedResults = btoa(JSON.stringify(guessResults));
-      navigate({ to: `/game/results/${encodedResults}` });
-    }
-  }, [roundNumber, navigate, guessResults]);
-
   async function resetAll() {
-    setRoundNumber(1);
     setTotalScore(0);
     setTimeLeft(0);
     setIsMapExpanded(false);
@@ -88,7 +80,6 @@ function RouteComponent() {
     setGuessResult(null);
     setIsEndRoundView(false);
     setShowLoadingScreen(true);
-    setGuessResults([]);
     confettiRef.current?.stop();
     await refetchRound();
   }
@@ -115,6 +106,10 @@ function RouteComponent() {
     );
     return () => setCenterContent(null);
   }, [roundNumber, timeLeft, setCenterContent]);
+
+  if (isError || roundData?.error ) {
+    return <div className="bg-black text-white text-4xl flex items-center justify-center h-[93.5vh]">An error has occurred: {roundData?.error}</div>
+  }
   return (
     <div className="relative" style={{ height: 'calc(100vh - 72px)' }}>
       {/* Overlay loading screen with animation */}
@@ -183,13 +178,13 @@ function RouteComponent() {
         </div>
         <div className="flex items-center">
           <Button variant={"outline"} size="lg" className="bg-white text-black border-white hover:bg-slate-200" onClick={() => {
-            // Store the guess result before moving to next round
-            if (guessResult) {
-              setGuessResults((prev) => [...prev, guessResult]);
-            }
             // Reset for next round
+            if (roundNumber >= 5) {
+              // Game complete, navigate to results page with uuid
+              navigate({ to: `/game/results/${uuid}`, viewTransition: true });
+              return;
+            }
             resetRound();
-            setRoundNumber((prev) => prev + 1);
             setTotalScore((prev) => prev + (guessResult ? guessResult.score : 0));
           }}>Next Round <ArrowRight /></Button>
         </div>

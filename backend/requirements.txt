@@ -2,3 +2,4 @@ Flask==3.0.0
 flask-cors==4.0.0
 requests
 gunicorn
+psycopg2-binary

@@ -18,6 +18,7 @@ from flask import Flask
 from flask_cors import CORS
 
 from data import load_panoramas
+from db import init_db
 
 from routes.health import health_bp
 from routes.game import game_bp
@@ -35,6 +36,7 @@ app.register_blueprint(tiles_bp)
 app.register_blueprint(static_bp)
 
 load_panoramas()
+init_db()
 
 if __name__ == '__main__':
     # Run the Flask app in debug mode
