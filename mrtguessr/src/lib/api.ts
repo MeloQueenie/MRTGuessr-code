@@ -48,6 +48,12 @@ export interface ResultsData {
 
 // --- API Functions --- //
 
+export async function getHealth(): Promise<string> {
+  let res = await fetch(`${BASE_URL}/health`);
+  let data = await res.text();
+  return data;
+}
+
 export async function startGame(): Promise<StartData> {
   let res = await fetch(`${API_URL}/game/start`,
     { method: 'POST' }

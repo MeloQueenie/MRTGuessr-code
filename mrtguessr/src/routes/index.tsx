@@ -15,7 +15,7 @@
   // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { logoUrl, startGame } from '@/lib/api'
+import { logoUrl, getHealth, startGame } from '@/lib/api'
 
 export const Route = createFileRoute('/')({component: App })
 
@@ -23,7 +23,13 @@ function App() {
   const navigate = useNavigate({
     from: "/"
   });
-  const {data: startData, refetch: refetchStart, isFetching: isLoading} = useQuery({
+
+  const {data: healthData} = useQuery({
+    queryKey: ['health'],
+    queryFn: getHealth,
+    refetchInterval: 10000,
+  });
+  const {refetch: refetchStart, isRefetching} = useQuery({
     queryKey: ['startGame'],
     queryFn: startGame,
     enabled: false,
@@ -47,19 +53,40 @@ function App() {
           <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
             Don't forget to ask Melody to write something for this section!
           </p>
-          <div className="flex flex-col items-center gap-4">
-            <div
-              onClick={() => {
-                refetchStart().then(({data}) => {
-                  if (data && data.uuid) {
-                    navigate({ to: `/game/${data.uuid}`, viewTransition: true });                    
-                  }
-                });
-              }}
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50 select-none cursor-pointer"
-            >
-              Play Now!
-            </div>
+          <div className={`flex flex-col items-center gap-4 animate-all duration-500 ${isRefetching ? 'opacity-0' : 'opacity-100'}`}>
+            {healthData ? (
+              <>
+                <div
+                  onClick={() => {
+                    refetchStart().then(({ data }) => {
+                      if (data && data.uuid) {
+                        navigate({ to: `/game/${data.uuid}`, viewTransition: true });
+                      }
+                    });
+                  }}
+                  className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50 select-none cursor-pointer"
+                >
+                  Play Now!
+                </div>
+
+                <div className="text-sm text-gray-400 mt-2 flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping"></span>
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
+                  </span>
+                  <span>API Status: {healthData}</span>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-gray-400 mt-2 flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75 animate-ping"></span>
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-yellow-500"></span>
+                </span>
+                <span>Connecting to API...</span>
+              </div>
+            )}
+
           </div>
         </div>
       </section>
