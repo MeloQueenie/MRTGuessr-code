@@ -9,7 +9,6 @@ import { Repeat, Share2 } from 'lucide-react'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/game/results/$uuid')({
-  ssr: false,
   component: RouteComponent,
 })
 

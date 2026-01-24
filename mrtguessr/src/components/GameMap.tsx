@@ -4,9 +4,6 @@ import { CRS, Icon } from 'leaflet'
 import { leafletToMinecraft, formatMinecraftCoords, minecraftToLeaflet } from '@/lib/coordinates'
 import { API_URL, GuessResult, pinpointUrl } from '@/lib/api'
 
-import 'leaflet/dist/leaflet.css'
-import 'leaflet/dist/leaflet.js'
-
 const actualIconMarker = new Icon({
   iconUrl: pinpointUrl.Actual,
   iconSize: [25, 25],

@@ -58,6 +58,10 @@ export const Route = createRootRoute({
     links: [
       { rel: 'icon', href: '/favicon.ico' },
       { rel: 'apple-touch-icon', href: '/icons/apple-touch-icon.png', sizes: '180x180' },
+      { rel: 'stylesheet', href: '/leaflet/leaflet.css' },
+    ],
+    scripts: [
+      { src: '/leaflet/leaflet.js', type: 'text/javascript' },
     ],
   }),
 
