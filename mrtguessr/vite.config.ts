@@ -4,7 +4,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 import { fileURLToPath, URL } from 'url'
-import { viteStaticCopy } from 'vite-plugin-static-copy'
+import { execSync } from 'node:child_process'
 
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
@@ -15,6 +15,22 @@ const config = defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  nitro: {
+    publicAssets: [
+      {
+        baseURL: 'leaflet',
+        dir: 'node_modules/leaflet/dist',
+        maxAge: 604800,
+      },
+    ],
+  },
+  define: {
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+    __GIT_HASH__: JSON.stringify(
+      execSync('git rev-parse --short HEAD').toString().trim() +
+        (execSync('git status --porcelain').toString().trim() ? '-dirty' : ''),
+    ),
+  },
   plugins: [
     devtools(),
     nitro(),
@@ -23,14 +39,6 @@ const config = defineConfig({
       projects: ['./tsconfig.json'],
     }),
     tailwindcss(),
-    viteStaticCopy({
-      targets: [
-        {
-          src: 'node_modules/leaflet/dist/*',
-          dest: 'leaflet'
-        }
-      ]
-    }),
     tanstackStart(),
     viteReact({
       babel: {
