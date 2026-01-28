@@ -1,16 +1,13 @@
 import math
 
 def calc_y(x):
-    # Clamp end values
-    # If less than 4 meters away, score is 25,000
-    # If more than 20,000 meters away, score is guaranteed to be 0, to make sure equation does not go into negatives
-    # If in-between, Calculate formula if between clamps
+    # Clamps
     if x <= 4:
-        return 25000
-    elif x >= 20000:
+        return 5000
+    elif x >= 10000:
         return 0
     else:
-        return math.floor(25000 * ((1 - (x - 4) / 19996) ** 5.2))
+        return math.floor(5000 * ((1 - (x - 4) / 19996) ** 12))
 
 # Few quick examples
 # print(f"3m away = {calc_y(3)}")

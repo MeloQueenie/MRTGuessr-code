@@ -1,6 +1,6 @@
 # Multi-stage build for TanStack Start with Nitro
 # Stage 1: Build the application
-FROM node:24-alpine AS builder
+FROM node:24 AS builder
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -21,7 +21,7 @@ COPY . .
 RUN pnpm run build
 
 # Stage 2: Production runtime
-FROM node:24-alpine AS runner
+FROM node:24 AS runner
 
 # Set working directory
 WORKDIR /app
