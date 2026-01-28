@@ -75,7 +75,14 @@ export default function Header() {
             <span className="font-medium">Home</span>
           </Link>
         </nav>
-        <div className="p-4 border-t border-gray-700 text-sm text-gray-400">
+        {__BUILD_DATE__ && __GIT_HASH__ && (
+          <div className="p-4 border-t border-gray-700 text-xs text-gray-500 text-center">
+            Build Date: {new Date(__BUILD_DATE__).toLocaleString()} <br />
+            Git Hash: {__GIT_HASH__}
+          </div>
+        )}
+        <div className="p-4 border-t border-gray-700 text-xs text-gray-500 text-center">
+          <img src="/pixl-wordmark-transparent.png" alt="Global Affairs Pixl Logo" className="h-6 w-auto mt-2 mx-auto"/>
           A Global Affairs Pixl development project.
         </div>
       </aside>
