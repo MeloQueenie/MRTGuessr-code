@@ -25,7 +25,7 @@ function RouteComponent() {
     return <div className="bg-black text-white text-4xl flex items-center justify-center h-[93.5vh]">Loading results...</div>
   }
 
-  const totalScore = resultData?.results.reduce((sum, result) => sum + result.score, 0) ?? 0;
+  const totalScore = resultData?.totalScore || 0;
   
   const handleShare = async () => {
     const url = window.location.href;

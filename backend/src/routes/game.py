@@ -8,6 +8,15 @@ from psycopg2.extras import Json
 
 game_bp = Blueprint('game', __name__)
 
+# -- Queries --
+def db_get_total_score(game_uuid):
+    result = execute_query(
+        "SELECT SUM((guess_result->>'score')::int) AS total_score FROM games, jsonb_array_elements(guess_results) AS guess_result WHERE uuid = %s",
+        (str(game_uuid),),
+        fetch=True
+    )
+    return result['total_score'] or 0
+
 @game_bp.route("/api/game/statistics")
 def game_statistics():
     """
@@ -39,13 +48,15 @@ def start_game():
 def get_round(game_uuid):
     """
     Get current or new round for a game. Idempotent - returns same panorama if already set.
-    Returns: {"panoramaId": 42, "roundNumber": 1}
+    Returns: {"panoramaId": 42, "roundNumber": 1, "totalScore": 12345}
     """
     result = execute_query(
         "SELECT round_number, current_panorama_id, created_at FROM games WHERE uuid = %s",
         (str(game_uuid),),
         fetch=True
     )
+
+    total_score_result = db_get_total_score(game_uuid)
 
     if not result:
         return jsonify({'error': 'Game not found'}), 404
@@ -62,6 +73,7 @@ def get_round(game_uuid):
     return jsonify({
         'panoramaId': panorama_id,
         'roundNumber': result['round_number'],
+        'totalScore': total_score_result,
         'createdAt': result['created_at'].isoformat()
     })
 
@@ -139,12 +151,15 @@ def get_results(game_uuid):
         fetch=True
     )
 
+    total_score_result = db_get_total_score(game_uuid)
+
     if not result:
         return jsonify({'error': 'Game not found'}), 404
 
     return jsonify({
         'results': result['guess_results'],
         'roundNumber': result['round_number'],
+        'totalScore': total_score_result,
         'createdAt': result['created_at'].isoformat(),
         'completedAt': result['completed_at'].isoformat() if result['completed_at'] else None
     })

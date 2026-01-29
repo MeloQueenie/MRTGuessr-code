@@ -26,6 +26,7 @@ export interface StartData {
 export interface RoundData {
   panoramaId: number;
   roundNumber: number;
+  totalScore: number;
   createdAt: string;
   error?: string;
 }
@@ -41,6 +42,7 @@ export interface GuessResult {
 }
 export interface ResultsData {
   roundNumber: number;
+  totalScore: number;
   createdAt: string;
   completedAt: string | null;
   results: GuessResult[];

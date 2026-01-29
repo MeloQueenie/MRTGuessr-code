@@ -4,7 +4,7 @@ import { CompassPlugin } from '@photo-sphere-viewer/compass-plugin'
 import { useState, useEffect, useRef } from 'react'
 import Lottie, { LottieRefCurrentProps } from 'lottie-react'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Compass, Repeat } from 'lucide-react'
+import { ArrowRight, Dot } from 'lucide-react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { fetchRoundData, postGuess, GuessResult, logoUrl, API_URL } from '@/lib/api'
 import { useHeader } from '@/contexts/HeaderContext'
@@ -20,23 +20,29 @@ export const Route = createFileRoute('/game/$uuid')({
   component: RouteComponent,
 })
 
-function HeaderContent({ roundNumber, timeLeft }: { roundNumber: number; timeLeft: number }) {
+function HeaderContent({ roundNumber, timeLeft, totalScore }: { roundNumber: number; timeLeft: number; totalScore: number }) {
   return (
+    <>
     <div className="flex items-center gap-4">
       <div className="text-lg font-semibold">
         Round {roundNumber} / 5
       </div>
+      <Dot />
+      <div>
+        Total Score: {totalScore.toLocaleString()}
+      </div>
+      <Dot />
       <div className="text-lg font-mono">
         {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
       </div>
     </div>
+    </>
   )
 }
 
 function RouteComponent() {
   const { uuid } = Route.useParams()
   const { setCenterContent } = useHeader()
-  const [totalScore, setTotalScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
@@ -51,6 +57,7 @@ function RouteComponent() {
     queryFn: () => fetchRoundData(uuid),
   })
   const roundNumber = roundData?.roundNumber || 1;
+  const totalScore = roundData?.totalScore || 0;
 
   const guessMutation = useMutation({
     mutationFn: ({ guessX, guessZ }: { guessX: number; guessZ: number }) =>
@@ -75,7 +82,6 @@ function RouteComponent() {
   }, [roundData])
 
   async function resetAll() {
-    setTotalScore(0);
     setTimeLeft(0);
     setIsMapExpanded(false);
     setMarkerPosition(null);
@@ -106,10 +112,10 @@ function RouteComponent() {
 
   useEffect(() => {
     setCenterContent(
-      <HeaderContent roundNumber={roundNumber} timeLeft={timeLeft} />
+      <HeaderContent roundNumber={roundNumber} timeLeft={timeLeft} totalScore={totalScore} />
     );
     return () => setCenterContent(null);
-  }, [roundNumber, timeLeft, setCenterContent]);
+  }, [roundNumber, timeLeft, totalScore, setCenterContent]);
 
   if (isError || roundData?.error ) {
     return <div className="bg-black text-white text-4xl flex items-center justify-center h-[93.5vh]">An error has occurred: {roundData?.error}</div>
@@ -190,7 +196,6 @@ function RouteComponent() {
               return;
             }
             resetRound();
-            setTotalScore((prev) => prev + (guessResult ? guessResult.score : 0));
           }}>Next Round <ArrowRight /></Button>
         </div>
       </div>
