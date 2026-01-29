@@ -2,12 +2,13 @@ import math
 
 def calc_y(x):
     # Clamps
-    if x <= 4:
+    if x <= 8:
         return 5000
-    elif x >= 10000:
+    elif x >= 15000:
         return 0
     else:
-        return math.floor(5000 * ((1 - (x - 4) / 19996) ** 12))
+    # Main formula
+        return math.floor(5000 * ((1 - (x - 8) / 19996) ** 6))
 
 # Few quick examples
 # print(f"3m away = {calc_y(3)}")
