@@ -46,16 +46,16 @@ function RouteComponent() {
           <img src={logoUrl.Full} alt="MRTGuessr Logo" className="w-64 mx-auto mb-6" />
           <h1 className="text-5xl font-bold mb-2">Game Complete!</h1>
           <div className="text-6xl font-bold text-emerald-400 mb-4">
-            {totalScore} points
+            {totalScore.toLocaleString()} points
           </div>
           <p className="text-xl text-slate-300">
-            Average: {Math.round(totalScore / 5)} points per round
+            Average: {Math.round(totalScore / 5).toLocaleString()} points per round
           </p>
         </div>
 
         {/* Results Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {resultData.results.map((result, index) => {
+          {resultData?.results.map((result, index) => {
             const guessLeaflet = minecraftToLeaflet(result.guessX, result.guessZ);
             const markerPosition: [number, number] = [guessLeaflet.lat, guessLeaflet.lng];
 

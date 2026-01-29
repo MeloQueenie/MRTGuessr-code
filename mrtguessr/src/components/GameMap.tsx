@@ -72,7 +72,7 @@ interface GameMapProps {
 
 export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResult, onMapClick }: GameMapProps) {
   return (
-    <MapContainer crs={CRS.Simple} center={[0, 0]} zoom={8} style={{ height: '100%', width: '100%', cursor: 'pointer' } }>
+    <MapContainer crs={CRS.Simple} center={[0, 0]} zoom={4} style={{ height: '100%', width: '100%', cursor: 'pointer' } }>
       <MapResizeHandler isExpanded={isExpanded} isEndRoundView={isEndRoundView} />
       <MapClickHandler onMapClick={onMapClick} />
       {guessResult && markerPosition && <AutoFitBounds markerPosition={markerPosition} guessResult={guessResult} />}
@@ -102,7 +102,7 @@ export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResul
           </Marker>
         )
       })()}
-      {guessResult && (() => {
+      {guessResult && markerPosition && (() => {
         const mcCoords = { x: guessResult.actualX, z: guessResult.actualZ };
         const leafletCoords = minecraftToLeaflet(mcCoords.x, mcCoords.z);
         console.log('Actual location in Leaflet coords:', leafletCoords);

@@ -58,9 +58,11 @@ function RouteComponent() {
     onSuccess: (result) => {
       setGuessResult(result)
       setIsEndRoundView(true)
-      setTimeout(() => {
-        confettiRef.current?.play()
-      }, 250)
+      if(result.score >= 5000) {
+        setTimeout(() => {
+          confettiRef.current?.play()
+        }, 250);
+      }
     },
   });
 
@@ -88,9 +90,11 @@ function RouteComponent() {
     setShowLoadingScreen(true);
     setIsEndRoundView(false);
     setMarkerPosition(null);
-    setGuessResult(null);
     confettiRef.current?.stop();
     refetchRound();
+    setTimeout(() => {
+      setGuessResult(null);
+    }, 500);
   }
 
   useEffect(() => {
@@ -148,6 +152,7 @@ function RouteComponent() {
       >
         <ClientOnly>
           <GameMap
+            key={roundData?.panoramaId}
             isExpanded={isMapExpanded}
             isEndRoundView={isEndRoundView}
             markerPosition={markerPosition}
@@ -160,7 +165,7 @@ function RouteComponent() {
             if (markerPosition && roundData) {
               const coords = leafletToMinecraft(markerPosition[0], markerPosition[1]);
               console.log(`Guessing at Minecraft coords: x=${coords.x}, z=${coords.z}`);
-              guessMutation.mutate({ panoramaId: roundData.panoramaId, roundNumber: roundNumber, guessX: coords.x, guessZ: coords.z });
+              guessMutation.mutate({ guessX: coords.x, guessZ: coords.z });
             }
           }} />
         </div>
@@ -170,10 +175,10 @@ function RouteComponent() {
         bottom-4 left-1/2 -translate-x-1/2 w-[95%] md:w-[98%] h-auto md:h-[22%] rounded-lg z-[1000] transition-all duration-300 ease-in-out bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-2 border-slate-700 p-4 md:p-4 ${isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <Lottie lottieRef={confettiRef} animationData={confettiAnimation} loop={false} autoPlay={false} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
         <div className="flex flex-col justify-center text-center">
-          <h1 className="text-2xl md:text-4xl font-bold text-emerald-400">Score: {guessResult?.score}</h1>
+          <h1 className="text-2xl md:text-4xl font-bold text-emerald-400">Score: {guessResult?.score.toLocaleString()}</h1>
           <div className='text-sm md:text-lg mt-2 text-slate-300'>
-            <p>Distance: {Math.round(guessResult?.distance!)}m</p>
-            <p className='font-bold text-white'>Actual Location: {guessResult?.town} (X {guessResult?.actualX}, Z {guessResult?.actualZ})</p>
+            <p>Distance: {Math.round(guessResult?.distance!).toLocaleString()}m</p>
+            <p className='font-bold text-white'>Actual Location: {guessResult?.town} (X {Math.floor(guessResult?.actualX!)}, Z {Math.floor(guessResult?.actualZ!)})</p>
           </div>
         </div>
         <div className="flex items-center">

@@ -15,7 +15,8 @@
   // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { logoUrl, getHealth, startGame } from '@/lib/api'
+import { logoUrl, getHealth, startGame, fetchGameStatistics } from '@/lib/api'
+import { ConstructionIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/')({component: App })
 
@@ -35,6 +36,11 @@ function App() {
     enabled: false,
   });
 
+  const { data: gameStatistics } = useQuery({
+    queryKey: ['gameStatistics'],
+    queryFn: fetchGameStatistics,
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
       <section className="relative py-20 px-6 text-center overflow-hidden">
@@ -50,8 +56,10 @@ function App() {
           <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
             Guess cities and locations around the MRT New World!
           </p>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
-            Don't forget to ask Melody to write something for this section!
+          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8 text-orange-400">
+            <ConstructionIcon className="inline-block mr-2 mb-1 animate-pulse" size={20} />
+            MRTGuessr is under construction! There will be missing features, bugs and data resets!
+            <ConstructionIcon className="inline-block ml-2 mb-1 animate-pulse" size={20} />
           </p>
           <div className={`flex flex-col items-center gap-4 animate-all duration-500 ${isRefetching ? 'opacity-0' : 'opacity-100'}`}>
             {healthData ? (
@@ -68,8 +76,18 @@ function App() {
                 >
                   Play Now!
                 </div>
-
-                <div className="text-sm text-gray-400 mt-2 flex items-center gap-2">
+                <p className="text-sm text-gray-500 mt-4">
+                  {gameStatistics ? (
+                    <>
+                      <span>{gameStatistics.totalPanoramas.toLocaleString()} panoramas</span>
+                      <span className="mx-2">•</span>
+                      <span>{gameStatistics.uniqueCities.toLocaleString()} unique cities</span>
+                    </>
+                  ) : (
+                    <>Loading game statistics...</>
+                  )}
+                </p>
+                <div className="text-sm text-gray-400 flex items-center gap-2">
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping"></span>
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>

@@ -45,12 +45,22 @@ export interface ResultsData {
   completedAt: string | null;
   results: GuessResult[];
 }
+export interface GameStatisticsData {
+  totalPanoramas: number;
+  uniqueCities: number;
+}
 
 // --- API Functions --- //
 
 export async function getHealth(): Promise<string> {
   let res = await fetch(`${BASE_URL}/health`);
   let data = await res.text();
+  return data;
+}
+
+export async function fetchGameStatistics(): Promise<GameStatisticsData> {
+  let res = await fetch(`${API_URL}/game/statistics`);
+  let data = await res.json();
   return data;
 }
 

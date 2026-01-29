@@ -8,6 +8,20 @@ from psycopg2.extras import Json
 
 game_bp = Blueprint('game', __name__)
 
+@game_bp.route("/api/game/statistics")
+def game_statistics():
+    """
+    Get game statistics: total panoramas and unique cities.
+    Returns: {"totalPanoramas": number, "uniqueCities": number}
+    """
+    panorama_data = get_panorama_data()
+    total_panoramas = len(panorama_data)
+    unique_cities = len(set(p['town'] for p in panorama_data.values()))
+    return jsonify({
+        'totalPanoramas': total_panoramas,
+        'uniqueCities': unique_cities
+    })
+
 @game_bp.route("/api/game/start", methods=['POST'])
 def start_game():
     """

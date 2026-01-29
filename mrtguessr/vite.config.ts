@@ -26,10 +26,11 @@ const config = defineConfig({
   },
   define: {
     __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
-    __GIT_HASH__: JSON.stringify(
-      execSync('git rev-parse --short HEAD').toString().trim() +
-        (execSync('git status --porcelain').toString().trim() ? '-dirty' : ''),
-    ),
+    // __GIT_HASH__: JSON.stringify(
+    //   execSync('git rev-parse --short HEAD').toString().trim() +
+    //     (execSync('git status --porcelain').toString().trim() ? '-dirty' : ''),
+    // ),
+    __GIT_HASH__: process.env.GIT_HASH ? JSON.stringify(process.env.GIT_HASH) : JSON.stringify('unknown'),
   },
   plugins: [
     devtools(),
