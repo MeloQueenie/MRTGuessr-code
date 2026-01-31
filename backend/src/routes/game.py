@@ -17,6 +17,7 @@ def db_get_total_score(game_uuid):
     )
     return result['total_score'] or 0
 
+# -- Routes --
 @game_bp.route("/api/game/statistics")
 def game_statistics():
     """
@@ -30,6 +31,16 @@ def game_statistics():
         'totalPanoramas': total_panoramas,
         'uniqueCities': unique_cities
     })
+
+@game_bp.route("/api/game/internal_panorama_data")
+def internal_panorama_data():
+    """
+    Get internal panorama data for debugging.
+    Returns: {"panoramaId": {"x": number, "z": number, "town": string}, ...}
+    """
+    panorama_data = get_panorama_data()
+    return jsonify(panorama_data)
+
 
 @game_bp.route("/api/game/start", methods=['POST'])
 def start_game():

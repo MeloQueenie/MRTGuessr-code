@@ -13,10 +13,10 @@
 
   // You should have received a copy of the GNU Affero General Public License
   // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { logoUrl, getHealth, startGame, fetchGameStatistics } from '@/lib/api'
-import { ConstructionIcon } from 'lucide-react'
+import { ConstructionIcon, Dot } from 'lucide-react'
 
 export const Route = createFileRoute('/')({component: App })
 
@@ -80,7 +80,7 @@ function App() {
                   {gameStatistics ? (
                     <>
                       <span>{gameStatistics.totalPanoramas.toLocaleString()} panoramas</span>
-                      <span className="mx-2">•</span>
+                      <Dot className="inline-block" />
                       <span>{gameStatistics.uniqueCities.toLocaleString()} unique cities</span>
                     </>
                   ) : (

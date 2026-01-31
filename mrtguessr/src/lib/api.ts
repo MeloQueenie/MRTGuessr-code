@@ -52,6 +52,40 @@ export interface GameStatisticsData {
   uniqueCities: number;
 }
 
+export interface InternalPanoramaData {
+  [panoramaId: number]: {
+    x: number;
+    z: number;
+    town: string;
+    rank: string;
+    notes: string;
+  }
+}
+
+export interface DynmapPlayer {
+  world: string;
+  armor: number;
+  name: string;
+  x: number;
+  y: number;
+  health: number;
+  z: number;
+  sort: number;
+  type: string;
+  account: string;
+}
+
+export interface DynmapData {
+  currentcount: number;
+  hasStorm: boolean;
+  players: DynmapPlayer[];
+  isThundering: boolean;
+  confighash: number;
+  servertime: number;
+  updates: any[];
+  timestamp: number;
+}
+
 // --- API Functions --- //
 
 export async function getHealth(): Promise<string> {
@@ -62,6 +96,17 @@ export async function getHealth(): Promise<string> {
 
 export async function fetchGameStatistics(): Promise<GameStatisticsData> {
   let res = await fetch(`${API_URL}/game/statistics`);
+  let data = await res.json();
+  return data;
+}
+
+export async function fetchInternalPanoramaData(): Promise<InternalPanoramaData> {
+  let res = await fetch(`${API_URL}/game/internal_panorama_data`);
+  let data = await res.json();
+  return data;
+}
+export async function fetchDynmapNewData(): Promise<DynmapData> {
+  let res = await fetch(`${API_URL}/tiles/dynmap_new.json`);
   let data = await res.json();
   return data;
 }

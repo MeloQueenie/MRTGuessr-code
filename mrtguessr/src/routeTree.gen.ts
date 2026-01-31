@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MapIndexRouteImport } from './routes/map/index'
 import { Route as GameUuidRouteImport } from './routes/game/$uuid'
 import { Route as GameResultsUuidRouteImport } from './routes/game/results.$uuid'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapIndexRoute = MapIndexRouteImport.update({
+  id: '/map/',
+  path: '/map/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GameUuidRoute = GameUuidRouteImport.update({
@@ -32,30 +38,34 @@ const GameResultsUuidRoute = GameResultsUuidRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/game/$uuid': typeof GameUuidRoute
+  '/map': typeof MapIndexRoute
   '/game/results/$uuid': typeof GameResultsUuidRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/game/$uuid': typeof GameUuidRoute
+  '/map': typeof MapIndexRoute
   '/game/results/$uuid': typeof GameResultsUuidRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/game/$uuid': typeof GameUuidRoute
+  '/map/': typeof MapIndexRoute
   '/game/results/$uuid': typeof GameResultsUuidRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/game/$uuid' | '/game/results/$uuid'
+  fullPaths: '/' | '/game/$uuid' | '/map' | '/game/results/$uuid'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/game/$uuid' | '/game/results/$uuid'
-  id: '__root__' | '/' | '/game/$uuid' | '/game/results/$uuid'
+  to: '/' | '/game/$uuid' | '/map' | '/game/results/$uuid'
+  id: '__root__' | '/' | '/game/$uuid' | '/map/' | '/game/results/$uuid'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GameUuidRoute: typeof GameUuidRoute
+  MapIndexRoute: typeof MapIndexRoute
   GameResultsUuidRoute: typeof GameResultsUuidRoute
 }
 
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map/': {
+      id: '/map/'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof MapIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/game/$uuid': {
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GameUuidRoute: GameUuidRoute,
+  MapIndexRoute: MapIndexRoute,
   GameResultsUuidRoute: GameResultsUuidRoute,
 }
 export const routeTree = rootRouteImport

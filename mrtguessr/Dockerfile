@@ -2,6 +2,9 @@
 # Stage 1: Build the application
 FROM node:24 AS builder
 
+ARG GIT_HASH
+ENV GIT_HASH=${GIT_HASH}
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 

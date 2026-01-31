@@ -7,7 +7,15 @@ from config import DYNMAP_BASE, CACHE_PATH, CACHE_TTL_SECONDS
 
 tiles_bp = Blueprint('tiles', __name__)
 
-
+@tiles_bp.route("/api/tiles/dynmap_new.json")
+def dynmap_new_json():
+    try:
+        response = requests.get(f"https://dynmap.minecartrapidtransit.net/main/standalone/dynmap_new.json", timeout=10)
+        if response.status_code != 200:
+            abort(404)
+        return Response(response.content, mimetype="application/json")
+    except requests.RequestException:
+        abort(404)
 
 @tiles_bp.route("/api/tiles/<int(signed=True):z>/<int(signed=True):x>/<int(signed=True):y>.png")
 def dynmap_tile(z, x, y):
