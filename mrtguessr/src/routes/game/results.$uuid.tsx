@@ -5,8 +5,25 @@ import { fetchResults, GuessResult, logoUrl } from '@/lib/api'
 import { GameMap } from '@/components/GameMap'
 import { minecraftToLeaflet } from '@/lib/coordinates'
 import { Button } from '@/components/ui/button'
-import { Repeat, Share2 } from 'lucide-react'
+import { Repeat, Share2, Clock } from 'lucide-react'
 import { useState } from 'react'
+
+function formatDuration(createdAt: string, completedAt: string | null): string {
+  if (!completedAt) return 'N/A'
+
+  const startTime = new Date(createdAt).getTime()
+  const endTime = new Date(completedAt).getTime()
+  const durationMs = endTime - startTime
+
+  const totalSeconds = Math.floor(durationMs / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`
+  }
+  return `${seconds}s`
+}
 
 export const Route = createFileRoute('/game/results/$uuid')({
   component: RouteComponent,
@@ -26,6 +43,7 @@ function RouteComponent() {
   }
 
   const totalScore = resultData?.totalScore || 0;
+  const duration = resultData ? formatDuration(resultData.createdAt, resultData.completedAt) : 'N/A';
   
   const handleShare = async () => {
     const url = window.location.href;
@@ -48,9 +66,15 @@ function RouteComponent() {
           <div className="text-6xl font-bold text-emerald-400 mb-4">
             {totalScore.toLocaleString()} points
           </div>
-          <p className="text-xl text-slate-300">
-            Average: {Math.round(totalScore / 5).toLocaleString()} points per round
-          </p>
+          <div className="flex flex-col items-center gap-2 text-xl text-slate-300">
+            <p>
+              Average: {Math.round(totalScore / 5).toLocaleString()} points per round
+            </p>
+            <p className="flex items-center gap-2">
+              <Clock size={20} />
+              <span>Time: {duration}</span>
+            </p>
+          </div>
         </div>
 
         {/* Results Grid */}
