@@ -63,14 +63,6 @@ export function GamesDataTable({
       },
     },
     {
-      accessorKey: 'roundsPlayed',
-      header: 'Rounds',
-      cell: ({ row }) => {
-        const rounds = row.getValue('roundsPlayed') as number
-        return <div className="text-slate-300">{rounds}</div>
-      },
-    },
-    {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => {
