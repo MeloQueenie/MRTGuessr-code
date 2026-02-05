@@ -44,7 +44,13 @@ export const Route = createFileRoute('/game/results/$uuid')({
     const totalScore = loaderData.totalScore || 0
     const avgScore = Math.round(totalScore / 5)
     const title = `MRTGuessr - ${totalScore.toLocaleString()} points!`
-    const description = `${displayName} scored ${totalScore.toLocaleString()} points in MRTGuessr! Average: ${avgScore.toLocaleString()} points per round.`
+
+    // Build detailed breakdown of rounds
+    const roundBreakdown = loaderData.results
+      .map((result) => `Round ${result.roundNumber}: ${result.town} - ${result.score.toLocaleString()} pts`)
+      .join('\n')
+
+    const description = `${displayName} scored ${totalScore.toLocaleString()} points in MRTGuessr!\n\n${roundBreakdown}`
 
     return {
       meta: [
