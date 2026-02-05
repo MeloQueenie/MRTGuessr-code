@@ -17,10 +17,19 @@ def load_panoramas():
             if row['X'] and row['Z'] and row['X'] != '-' and row['Z'] != '-':
                 # Extract the panorama number from filename (e.g., "panorama_0" -> 0)
                 panorama_id = int(row['Filename'].split('_')[1])
+
+                # Normalize coordinates to ensure they end with .5 (center of block)
+                x = float(row['X'])
+                z = float(row['Z'])
+                if x % 1 == 0:
+                    x += 0.5
+                if z % 1 == 0:
+                    z += 0.5
+
                 panorama_data[panorama_id] = {
                     'id': panorama_id,
-                    'x': float(row['X']),
-                    'z': float(row['Z']),
+                    'x': x,
+                    'z': z,
                     'town': row['Closest Town'],
                     'rank': row['Town Rank'],
                     'notes': row['Notes']
