@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { ClientOnly } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { fetchResults, GuessResult, logoUrl } from '@/lib/api'
+import { fetchResults, GuessResult, logoUrl, PUBLIC_URL } from '@/lib/api'
 import { GameMap } from '@/components/GameMap'
 import { minecraftToLeaflet } from '@/lib/coordinates'
 import { Button } from '@/components/ui/button'
@@ -27,15 +27,55 @@ function formatDuration(createdAt: string, completedAt: string | null): string {
 
 export const Route = createFileRoute('/game/results/$uuid')({
   component: RouteComponent,
+  loader: async ({ params }) => {
+    const results = await fetchResults(params.uuid)
+    return results
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) {
+      return {
+        meta: [
+          { title: 'MRTGuessr - Game Results' },
+        ],
+      }
+    }
+
+    const displayName = loaderData.displayName || 'Player'
+    const totalScore = loaderData.totalScore || 0
+    const avgScore = Math.round(totalScore / 5)
+    const title = `MRTGuessr - ${totalScore.toLocaleString()} points!`
+    const description = `${displayName} scored ${totalScore.toLocaleString()} points in MRTGuessr! Average: ${avgScore.toLocaleString()} points per round.`
+
+    return {
+      meta: [
+        { title },
+        { name: 'description', content: description },
+        // Open Graph
+        { property: 'og:title', content: title },
+        { property: 'og:description', content: description },
+        { property: 'og:image', content: logoUrl.Full },
+        { property: 'og:type', content: 'website' },
+        // Twitter Card
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: title },
+        { name: 'twitter:description', content: description },
+        { name: 'twitter:image', content: logoUrl.Full },
+      ],
+    }
+  },
 })
 
 function RouteComponent() {
   const { uuid } = Route.useParams()
   const navigate = useNavigate()
   const [copySuccess, setCopySuccess] = useState(false)
+  const loaderData = Route.useLoaderData()
+
+  // Still use useQuery for reactivity, but initialize with loader data
   const { data: resultData, isLoading } = useQuery({
     queryKey: ['resultsData', uuid],
     queryFn: () => fetchResults(uuid),
+    initialData: loaderData,
   });
 
   if (isLoading) {

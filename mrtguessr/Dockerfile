@@ -5,6 +5,9 @@ FROM node:24 AS builder
 ARG GIT_HASH
 ENV GIT_HASH=${GIT_HASH}
 
+ARG VITE_PUBLIC_URL
+ENV VITE_PUBLIC_URL=${VITE_PUBLIC_URL}
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 

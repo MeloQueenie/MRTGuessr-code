@@ -1,5 +1,21 @@
-export const BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:5000';
+// Detect if we're running server-side (SSR)
+const isServer = typeof window === 'undefined';
+
+// Use internal backend URL when server-side, empty string for client-side in prod
+function getBaseUrl(): string {
+  if (isServer) {
+    // Server-side: use internal docker service name
+    return import.meta.env.PROD ? 'http://backend:5000' : 'http://localhost:5000';
+  }
+  // Client-side: use empty string in prod (reverse proxy), localhost in dev
+  return import.meta.env.PROD ? '' : 'http://localhost:5000';
+}
+
+export const BASE_URL = getBaseUrl();
 export const API_URL = `${BASE_URL}/api`;
+
+// Public URL for meta tags (OG images, etc.) - fallback to BASE_URL for dev
+export const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL || BASE_URL;
 
 export const guessButtonPartsUrl = {
   LCorner: `${BASE_URL}/graphics/guessButton/MRTGuessr-GuessButton_LCorner.svg`,
@@ -9,9 +25,9 @@ export const guessButtonPartsUrl = {
 }
 
 export const logoUrl = {
-  Full: `${BASE_URL}/graphics/logo/MRTGuessr-GameLogo_Logo.svg`,
-  Icon: `${BASE_URL}/graphics/logo/MRTGuessr-GameLogo_LogoOnly.svg`,
-  Text: `${BASE_URL}/graphics/logo/MRTGuessr-GameLogo_TextOnly.svg`,
+  Full: `${PUBLIC_URL}/graphics/logo/MRTGuessr-GameLogo_Logo.svg`,
+  Icon: `${PUBLIC_URL}/graphics/logo/MRTGuessr-GameLogo_LogoOnly.svg`,
+  Text: `${PUBLIC_URL}/graphics/logo/MRTGuessr-GameLogo_TextOnly.svg`,
 }
 
 export const pinpointUrl = {
