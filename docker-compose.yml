@@ -54,6 +54,8 @@ services:
     build:
       context: ./mrtguessr
       dockerfile: Dockerfile
+      args:
+        GIT_HASH: ${GIT_HASH}
     expose:
       - "3000"
     environment:
