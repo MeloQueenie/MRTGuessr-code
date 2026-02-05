@@ -143,6 +143,7 @@ function RouteComponent() {
             height="100%"
             width="100%"
             navbar={false}
+            defaultZoomLvl={0} 
           ></ReactPhotoSphereViewer>
         )}
       </div>
