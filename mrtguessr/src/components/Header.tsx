@@ -5,18 +5,23 @@ import {
   ChevronDown,
   ChevronRight,
   Home,
+  LogIn,
   Menu,
   Network,
   RefreshCw,
   SquareFunction,
   StickyNote,
+  Trophy,
+  User,
   X,
 } from 'lucide-react'
 import { useHeader } from '@/contexts/HeaderContext'
-import { logoUrl } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
+import { logoUrl, getLoginUrl } from '@/lib/api'
 
 export default function Header() {
   const { centerContent } = useHeader()
+  const { isAuthenticated, user, isLoading } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [groupedExpanded, setGroupedExpanded] = useState<
     Record<string, boolean>
@@ -42,6 +47,37 @@ export default function Header() {
         </div>
         <div className="flex items-center gap-4">
           {centerContent}
+          {!isLoading && (
+            <>
+              {isAuthenticated && user ? (
+                <Link
+                  to="/profile/$username"
+                  params={{ username: user.username }}
+                  viewTransition
+                  className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  {user.profile_picture ? (
+                    <img
+                      src={user.profile_picture}
+                      alt={user.display_name}
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <User size={20} />
+                  )}
+                  <span className="hidden md:inline text-sm">{user.display_name}</span>
+                </Link>
+              ) : (
+                <a
+                  href={getLoginUrl()}
+                  className="flex items-center gap-2 px-3 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors text-sm"
+                >
+                  <LogIn size={16} />
+                  <span className="hidden md:inline">Login with Discord</span>
+                </a>
+              )}
+            </>
+          )}
         </div>
       </header>
 
@@ -73,6 +109,18 @@ export default function Header() {
           >
             <Home size={20} />
             <span className="font-medium">Home</span>
+          </Link>
+          <Link
+            to="/leaderboard"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+            activeProps={{
+              className:
+                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+            }}
+          >
+            <Trophy size={20} />
+            <span className="font-medium">Leaderboard</span>
           </Link>
         </nav>
         {__BUILD_DATE__ && __GIT_HASH__ && (

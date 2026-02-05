@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import Header from '../components/Header'
 import { HeaderProvider } from '../contexts/HeaderContext'
+import { AuthProvider } from '../contexts/AuthContext'
 
 import '../styles.css'
 import { logoUrl } from '@/lib/api'
@@ -76,10 +77,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <QueryClientProvider client={queryClient}>
-          <HeaderProvider>
-            <Header />
-            {children}
-          </HeaderProvider>
+          <AuthProvider>
+            <HeaderProvider>
+              <Header />
+              {children}
+            </HeaderProvider>
+          </AuthProvider>
           <TanStackDevtools
             config={{
               position: 'bottom-right',

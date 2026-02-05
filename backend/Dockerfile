@@ -12,4 +12,4 @@ COPY src/ src/
 
 USER appuser
 EXPOSE 5000
-CMD ["gunicorn", "-w", "4", "-k", "gthread", "--threads", "4", "--chdir", "src", "app:app", "--bind", "0.0.0.0:5000"] 
+CMD ["gunicorn", "-w", "8", "-k", "gthread", "--threads", "4", "--chdir", "src", "app:app", "--bind", "0.0.0.0:5000"] 

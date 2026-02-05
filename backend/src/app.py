@@ -25,15 +25,19 @@ from routes.game import game_bp
 from routes.panorama import panorama_bp
 from routes.tiles import tiles_bp
 from routes.static import static_bp
+from routes.auth import auth_bp
+from routes.user import user_bp
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 
 app.register_blueprint(health_bp)
 app.register_blueprint(game_bp)
 app.register_blueprint(panorama_bp)
 app.register_blueprint(tiles_bp)
 app.register_blueprint(static_bp)
+app.register_blueprint(auth_bp)
+app.register_blueprint(user_bp)
 
 load_panoramas()
 init_db()

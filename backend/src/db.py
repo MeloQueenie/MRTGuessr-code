@@ -17,6 +17,20 @@ def init_db():
     cur = conn.cursor()
 
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            uuid UUID UNIQUE DEFAULT gen_random_uuid(),
+            oauth_id VARCHAR(255) UNIQUE NOT NULL,
+            username VARCHAR(255) NOT NULL,
+            display_name VARCHAR(255),
+            description TEXT,
+            profile_picture TEXT,
+            session_token VARCHAR(255) UNIQUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS games (
             uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -27,19 +41,63 @@ def init_db():
         )
     """)
 
+    # Update game table with a new columns - user id, which is a foreign key to users table
+    cur.execute("""
+        ALTER TABLE games
+        ADD COLUMN IF NOT EXISTS user_id INTEGER;
+    """)
+    cur.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM information_schema.table_constraints
+                WHERE constraint_name = 'fk_user'
+                  AND table_name = 'games'
+            ) THEN
+                ALTER TABLE games
+                ADD CONSTRAINT fk_user
+                FOREIGN KEY (user_id) REFERENCES users(id)
+                ON DELETE SET NULL;
+            END IF;
+        END $$;
+    """)
+
+    # Performance indexes
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_games_user_id
+        ON games(user_id);
+    """)
+
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_games_created_at
+        ON games(created_at);
+    """)
+
     conn.commit()
     cur.close()
 
-def execute_query(query, params=None, fetch=False):
-    """Execute a database query."""
+def get_db_version() -> str:
+    """Get the PostgreSQL database version."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT version();")
+    version = cur.fetchone()
+    cur.close()
+    return version[0]
+
+def execute_query(query, params=None, fetchone=False, fetchall=False):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute(query, params or ())
 
     result = None
-    if fetch:
-        result = cur.fetchone() if 'RETURNING' in query or 'SELECT' in query else None
+    if fetchone:
+        result = cur.fetchone()
+    elif fetchall:
+        result = cur.fetchall()
 
     conn.commit()
     cur.close()
     return result
+

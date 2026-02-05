@@ -9,11 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MapIndexRouteImport } from './routes/map/index'
+import { Route as ProfileUsernameRouteImport } from './routes/profile/$username'
 import { Route as GameUuidRouteImport } from './routes/game/$uuid'
 import { Route as GameResultsUuidRouteImport } from './routes/game/results.$uuid'
 
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -22,6 +29,11 @@ const IndexRoute = IndexRouteImport.update({
 const MapIndexRoute = MapIndexRouteImport.update({
   id: '/map/',
   path: '/map/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
+  id: '/profile/$username',
+  path: '/profile/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GameUuidRoute = GameUuidRouteImport.update({
@@ -37,40 +49,74 @@ const GameResultsUuidRoute = GameResultsUuidRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/game/$uuid': typeof GameUuidRoute
+  '/profile/$username': typeof ProfileUsernameRoute
   '/map': typeof MapIndexRoute
   '/game/results/$uuid': typeof GameResultsUuidRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/game/$uuid': typeof GameUuidRoute
+  '/profile/$username': typeof ProfileUsernameRoute
   '/map': typeof MapIndexRoute
   '/game/results/$uuid': typeof GameResultsUuidRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/game/$uuid': typeof GameUuidRoute
+  '/profile/$username': typeof ProfileUsernameRoute
   '/map/': typeof MapIndexRoute
   '/game/results/$uuid': typeof GameResultsUuidRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/game/$uuid' | '/map' | '/game/results/$uuid'
+  fullPaths:
+    | '/'
+    | '/leaderboard'
+    | '/game/$uuid'
+    | '/profile/$username'
+    | '/map'
+    | '/game/results/$uuid'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/game/$uuid' | '/map' | '/game/results/$uuid'
-  id: '__root__' | '/' | '/game/$uuid' | '/map/' | '/game/results/$uuid'
+  to:
+    | '/'
+    | '/leaderboard'
+    | '/game/$uuid'
+    | '/profile/$username'
+    | '/map'
+    | '/game/results/$uuid'
+  id:
+    | '__root__'
+    | '/'
+    | '/leaderboard'
+    | '/game/$uuid'
+    | '/profile/$username'
+    | '/map/'
+    | '/game/results/$uuid'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LeaderboardRoute: typeof LeaderboardRoute
   GameUuidRoute: typeof GameUuidRoute
+  ProfileUsernameRoute: typeof ProfileUsernameRoute
   MapIndexRoute: typeof MapIndexRoute
   GameResultsUuidRoute: typeof GameResultsUuidRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -83,6 +129,13 @@ declare module '@tanstack/react-router' {
       path: '/map'
       fullPath: '/map'
       preLoaderRoute: typeof MapIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$username': {
+      id: '/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof ProfileUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/game/$uuid': {
@@ -104,7 +157,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LeaderboardRoute: LeaderboardRoute,
   GameUuidRoute: GameUuidRoute,
+  ProfileUsernameRoute: ProfileUsernameRoute,
   MapIndexRoute: MapIndexRoute,
   GameResultsUuidRoute: GameResultsUuidRoute,
 }

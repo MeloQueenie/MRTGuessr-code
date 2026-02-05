@@ -5,6 +5,7 @@ from data import get_panorama_data
 from utils.scoreDist import calc_y
 from db import execute_query
 from psycopg2.extras import Json
+from routes.auth import get_user_from_token
 
 game_bp = Blueprint('game', __name__)
 
@@ -13,9 +14,27 @@ def db_get_total_score(game_uuid):
     result = execute_query(
         "SELECT SUM((guess_result->>'score')::int) AS total_score FROM games, jsonb_array_elements(guess_results) AS guess_result WHERE uuid = %s",
         (str(game_uuid),),
-        fetch=True
+        fetchone=True
     )
     return result['total_score'] or 0
+
+def db_get_leaderboard(top_n=100):
+    results = execute_query(
+        """SELECT u.display_name, u.username, u.profile_picture, g.total_score, g.created_at
+           FROM (
+               SELECT user_id, SUM((guess_result->>'score')::int) AS total_score, MIN(created_at) AS created_at
+               FROM games, jsonb_array_elements(guess_results) AS guess_result
+               WHERE completed_at IS NOT NULL
+               GROUP BY user_id
+           ) g
+           JOIN users u ON g.user_id = u.id
+           ORDER BY g.total_score DESC, g.created_at ASC
+           LIMIT %s
+        """,
+        (top_n,),
+        fetchall=True
+    )
+    return results
 
 # -- Routes --
 @game_bp.route("/api/game/statistics")
@@ -32,6 +51,24 @@ def game_statistics():
         'uniqueCities': unique_cities
     })
 
+@game_bp.route("/api/game/leaderboard")
+def game_leaderboard():
+    """
+    Get the game leaderboard.
+    Returns: [{"displayName": string, "username": string, "profilePicture": string, "totalScore": number, "createdAt": string}, ...]
+    """
+    leaderboard = db_get_leaderboard()
+    return jsonify([
+        {
+            'displayName': row['display_name'],
+            'username': row['username'],
+            'profilePicture': row['profile_picture'],
+            'totalScore': row['total_score'],
+            'createdAt': row['created_at'].isoformat()
+        }
+        for row in leaderboard
+    ])
+
 @game_bp.route("/api/game/internal_panorama_data")
 def internal_panorama_data():
     """
@@ -46,12 +83,20 @@ def internal_panorama_data():
 def start_game():
     """
     Start a new game and return a UUID.
-    Returns: {"uuid": "550e8400-e29b-41d4-a716-446655440000"}
+    Returns: {"uuid": "..."}
     """
+    token = request.cookies.get('auth_token')
+    user = get_user_from_token(token)
+    print("Auth token:", token)
+    print("Starting game for user:", user)
+    user_id = user['id'] if user else None
+
     result = execute_query(
-        "INSERT INTO games DEFAULT VALUES RETURNING uuid",
-        fetch=True
+        "INSERT INTO games (user_id) VALUES (%s) RETURNING uuid",
+        (user_id,),
+        fetchone=True
     )
+
     return jsonify({'uuid': str(result['uuid'])})
 
 
@@ -64,7 +109,7 @@ def get_round(game_uuid):
     result = execute_query(
         "SELECT round_number, current_panorama_id, created_at FROM games WHERE uuid = %s",
         (str(game_uuid),),
-        fetch=True
+        fetchone=True
     )
 
     total_score_result = db_get_total_score(game_uuid)
@@ -100,7 +145,7 @@ def submit_guess(game_uuid):
     current_game_data = execute_query(
         "SELECT current_panorama_id, round_number FROM games WHERE uuid = %s",
         (str(game_uuid),),
-        fetch=True
+        fetchone=True
     )
 
     panorama_data = get_panorama_data()
@@ -154,12 +199,16 @@ def submit_guess(game_uuid):
 def get_results(game_uuid):
     """
     Get all guess results for a game.
-    Returns: {"results": [...], "roundNumber": 5}
+    Returns: {"results": [...], "roundNumber": 5, "displayName": "...", "username": "..."}
     """
     result = execute_query(
-        "SELECT guess_results, round_number, created_at, completed_at FROM games WHERE uuid = %s",
+        """SELECT g.guess_results, g.round_number, g.created_at, g.completed_at,
+                  u.display_name, u.username, u.profile_picture
+           FROM games g
+           LEFT JOIN users u ON g.user_id = u.id
+           WHERE g.uuid = %s""",
         (str(game_uuid),),
-        fetch=True
+        fetchone=True
     )
 
     total_score_result = db_get_total_score(game_uuid)
@@ -171,6 +220,9 @@ def get_results(game_uuid):
         'results': result['guess_results'],
         'roundNumber': result['round_number'],
         'totalScore': total_score_result,
+        'displayName': result['display_name'],
+        'username': result['username'],
+        'profilePicture': result['profile_picture'],
         'createdAt': result['created_at'].isoformat(),
         'completedAt': result['completed_at'].isoformat() if result['completed_at'] else None
     })

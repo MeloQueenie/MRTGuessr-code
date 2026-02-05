@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { ClientOnly } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { fetchResults, GuessResult, logoUrl } from '@/lib/api'
@@ -66,13 +66,38 @@ function RouteComponent() {
           <div className="text-6xl font-bold text-emerald-400 mb-4">
             {totalScore.toLocaleString()} points
           </div>
+
+          {/* Player Info */}
+          {resultData && (
+            <div className="flex items-center justify-center gap-3 mb-4">
+              {resultData.profilePicture && (
+                <img
+                  src={resultData.profilePicture}
+                  alt={resultData.displayName || 'Player'}
+                  className="w-10 h-10 rounded-full border-2 border-emerald-400"
+                />
+              )}
+              <div className="text-xl text-slate-300">
+                Played by{' '}
+                {resultData.username && resultData.username !== 'anonymous' ? (
+                  <Link
+                    to="/profile/$username"
+                    params={{ username: resultData.username }}
+                    className="font-semibold text-white hover:text-emerald-400 transition-colors"
+                  >
+                    {resultData.displayName || 'anonymous'}
+                  </Link>
+                ) : (
+                  <span className="font-semibold text-white">{resultData.displayName || 'anonymous'}</span>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col items-center gap-2 text-xl text-slate-300">
-            <p>
-              Average: {Math.round(totalScore / 5).toLocaleString()} points per round
-            </p>
             <p className="flex items-center gap-2">
               <Clock size={20} />
-              <span>Time: {duration}</span>
+              <span>{duration}</span>
             </p>
           </div>
         </div>

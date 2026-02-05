@@ -46,6 +46,9 @@ export interface ResultsData {
   createdAt: string;
   completedAt: string | null;
   results: GuessResult[];
+  displayName: string | null;
+  username: string | null;
+  profilePicture: string | null;
 }
 export interface GameStatisticsData {
   totalPanoramas: number;
@@ -86,7 +89,77 @@ export interface DynmapData {
   timestamp: number;
 }
 
+export interface User {
+  uuid: string;
+  username: string;
+  display_name: string;
+  description: string | null;
+  profile_picture: string | null;
+}
+
+export interface AuthCheckResponse {
+  authenticated: boolean;
+  user?: User;
+}
+
+export interface UserProfile {
+  uuid: string;
+  username: string;
+  displayName: string;
+  description: string | null;
+  profilePicture: string | null;
+  createdAt: string;
+}
+
+export interface LeaderboardEntry {
+  displayName: string;
+  username: string;
+  profilePicture: string | null;
+  totalScore: number;
+  createdAt: string;
+}
+
+export interface UserGame {
+  uuid: string;
+  createdAt: string;
+  completedAt: string;
+  totalScore: number;
+  roundsPlayed: number;
+}
+
+export interface UserGamesResponse {
+  games: UserGame[];
+  page: number;
+  limit: number;
+  total: number;
+  stats: {
+    totalGames: number;
+    totalScore: number;
+    avgScore: number;
+  };
+}
+
 // --- API Functions --- //
+
+// Auth Functions
+export async function checkAuth(): Promise<AuthCheckResponse> {
+  let res = await fetch(`${API_URL}/auth/check`, {
+    credentials: 'include',
+  });
+  let data = await res.json();
+  return data;
+}
+
+export async function logout(): Promise<void> {
+  await fetch(`${API_URL}/auth/logout`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+}
+
+export function getLoginUrl(): string {
+  return `${API_URL}/auth/login`;
+}
 
 export async function getHealth(): Promise<string> {
   let res = await fetch(`${BASE_URL}/health`);
@@ -95,25 +168,31 @@ export async function getHealth(): Promise<string> {
 }
 
 export async function fetchGameStatistics(): Promise<GameStatisticsData> {
-  let res = await fetch(`${API_URL}/game/statistics`);
+  let res = await fetch(`${API_URL}/game/statistics`, {
+    credentials: 'include',
+  });
   let data = await res.json();
   return data;
 }
 
 export async function fetchInternalPanoramaData(): Promise<InternalPanoramaData> {
-  let res = await fetch(`${API_URL}/game/internal_panorama_data`);
+  let res = await fetch(`${API_URL}/game/internal_panorama_data`, {
+    credentials: 'include',
+  });
   let data = await res.json();
   return data;
 }
 export async function fetchDynmapNewData(): Promise<DynmapData> {
-  let res = await fetch(`${API_URL}/tiles/dynmap_new.json`);
+  let res = await fetch(`${API_URL}/tiles/dynmap_new.json`, {
+    credentials: 'include',
+  });
   let data = await res.json();
   return data;
 }
 
 export async function startGame(): Promise<StartData> {
   let res = await fetch(`${API_URL}/game/start`,
-    { method: 'POST' }
+    { method: 'POST', credentials: 'include' }
   );
   let data = await res.json();
   return data;
@@ -121,7 +200,7 @@ export async function startGame(): Promise<StartData> {
 
 export async function fetchRoundData(uuid: string): Promise<RoundData> {
   let res = await fetch(`${API_URL}/game/${uuid}/round`,
-    { method: 'POST' }
+    { method: 'POST', credentials: 'include' }
   );
   let data = await res.json();
   return data;
@@ -137,7 +216,7 @@ export async function postGuess(uuid: string, guessX: number, guessZ: number): P
     headers: {
       'Content-Type': 'application/json',
     },
-
+    credentials: 'include',
     body: JSON.stringify({
       guessX: guessX,
       guessZ: guessZ,
@@ -149,7 +228,56 @@ export async function postGuess(uuid: string, guessX: number, guessZ: number): P
 }
 
 export async function fetchResults(uuid: string): Promise<ResultsData> {
-  let res = await fetch(`${API_URL}/game/${uuid}/results`);
+  let res = await fetch(`${API_URL}/game/${uuid}/results`, {
+    credentials: 'include',
+  });
+  let data = await res.json();
+  return data;
+}
+
+export async function fetchUserProfile(identifier: string): Promise<UserProfile> {
+  let res = await fetch(`${API_URL}/user/${identifier}`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error('User not found');
+  }
+  let data = await res.json();
+  return data;
+}
+
+export async function updateUserProfile(identifier: string, description: string): Promise<UserProfile> {
+  let res = await fetch(`${API_URL}/user/${identifier}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ description }),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Failed to update profile');
+  }
+  let data = await res.json();
+  return data;
+}
+
+export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
+  let res = await fetch(`${API_URL}/game/leaderboard`, {
+    credentials: 'include',
+  });
+  let data = await res.json();
+  return data;
+}
+
+export async function fetchUserGames(identifier: string, page: number = 1, limit: number = 10): Promise<UserGamesResponse> {
+  let res = await fetch(`${API_URL}/user/${identifier}/games?page=${page}&limit=${limit}`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch user games');
+  }
   let data = await res.json();
   return data;
 }
