@@ -31,10 +31,13 @@ def get_user_from_token(token) -> dict | None:
     cur.close()
     return user
 
-def create_or_update_user(oauth_id, username, display_name, profile_picture, session_token):
+def create_or_update_user(oauth_id, username, display_name, profile_picture, session_token) -> dict:
     """Create or update a user in the database."""
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    if display_name == "" or display_name is None:
+        display_name = username
 
     cur.execute("""
         INSERT INTO users (oauth_id, username, display_name, profile_picture, session_token)
@@ -107,6 +110,7 @@ def callback():
 
     # Create or update user
     user = create_or_update_user(oauth_id, username, display_name, profile_picture, session_token)
+    print("OAuth2 callback:", user)
 
     # Set cookie and redirect to frontend
     response = make_response(redirect('/'))
