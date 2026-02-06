@@ -87,13 +87,23 @@ def db_get_total_score(game_uuid):
     )
     return result['total_score'] or 0
 
-def db_get_leaderboard(top_n=100):
+def db_get_leaderboard(top_n=100, period='all_time'):
+    # Determine the date filter based on period
+    date_filter = ""
+    if period == 'daily':
+        date_filter = "AND completed_at >= CURRENT_DATE"
+    elif period == 'monthly':
+        date_filter = "AND completed_at >= DATE_TRUNC('month', CURRENT_DATE)"
+    elif period == 'yearly':
+        date_filter = "AND completed_at >= DATE_TRUNC('year', CURRENT_DATE)"
+    # For 'all_time', no additional filter needed
+
     results = execute_query(
-        """SELECT u.display_name, u.username, u.profile_picture, g.total_score, g.created_at
+        f"""SELECT u.display_name, u.username, u.profile_picture, g.total_score, g.created_at
            FROM (
                SELECT user_id, SUM((guess_result->>'score')::int) AS total_score, MIN(created_at) AS created_at
                FROM games, jsonb_array_elements(guess_results) AS guess_result
-               WHERE completed_at IS NOT NULL
+               WHERE completed_at IS NOT NULL {date_filter}
                GROUP BY user_id
            ) g
            JOIN users u ON g.user_id = u.id
@@ -124,9 +134,16 @@ def game_statistics():
 def game_leaderboard():
     """
     Get the game leaderboard.
+    Query params: period (daily, monthly, yearly, all_time) - defaults to all_time
     Returns: [{"displayName": string, "username": string, "profilePicture": string, "totalScore": number, "createdAt": string}, ...]
     """
-    leaderboard = db_get_leaderboard()
+    period = request.args.get('period', 'all_time')
+    valid_periods = ['daily', 'monthly', 'yearly', 'all_time']
+
+    if period not in valid_periods:
+        return jsonify({'error': 'Invalid period. Must be one of: daily, monthly, yearly, all_time'}), 400
+
+    leaderboard = db_get_leaderboard(period=period)
     return jsonify([
         {
             'displayName': row['display_name'],

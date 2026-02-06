@@ -1,22 +1,33 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { fetchLeaderboard, logoUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Trophy, User, ArrowLeft, Medal } from 'lucide-react'
+import { z } from 'zod'
+
+type Period = 'daily' | 'monthly' | 'yearly' | 'all_time'
+
+const leaderboardSearchSchema = z.object({
+  period: z.enum(['daily', 'monthly', 'yearly', 'all_time']).optional().default('daily'),
+})
 
 export const Route = createFileRoute('/leaderboard')({
   component: RouteComponent,
+  validateSearch: leaderboardSearchSchema,
 })
 
 function RouteComponent() {
+  const navigate = useNavigate({ from: '/leaderboard' })
+  const { period } = Route.useSearch()
+
   const { data: leaderboard, isLoading, error } = useQuery({
-    queryKey: ['leaderboard'],
-    queryFn: fetchLeaderboard,
+    queryKey: ['leaderboard', period],
+    queryFn: () => fetchLeaderboard(period),
   })
 
   if (isLoading) {
     return (
-      <div className="bg-black text-white text-4xl flex items-center justify-center h-[93.5vh]">
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white text-4xl flex items-center justify-center h-[93.5vh]">
         Loading leaderboard...
       </div>
     )
@@ -57,6 +68,15 @@ function RouteComponent() {
     return 'from-slate-700 to-slate-600'
   }
 
+  const getPeriodLabel = (p: Period) => {
+    switch (p) {
+      case 'daily': return 'Today'
+      case 'monthly': return 'This Month'
+      case 'yearly': return 'This Year'
+      case 'all_time': return 'All Time'
+    }
+  }
+
   return (
     <div className="min-h-[93.5vh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-8">
       <div className="max-w-5xl mx-auto">
@@ -67,9 +87,27 @@ function RouteComponent() {
             <Trophy className="text-yellow-400" size={48} />
             Leaderboard
           </h1>
-          <p className="text-xl text-slate-300">
+          <p className="text-xl text-slate-300 mb-6">
             Top players by total score
           </p>
+
+          {/* Period Selection */}
+          <div className="flex justify-center gap-2 flex-wrap">
+            {(['daily', 'monthly', 'yearly', 'all_time'] as Period[]).map((p) => (
+              <Button
+                key={p}
+                onClick={() => navigate({ search: { period: p } })}
+                variant={"outline"}
+                className={
+                  period === p
+                    ? 'bg-yellow-500 border-yellow-500 hover:bg-yellow-600 text-black'
+                    : 'bg-slate-800 border-slate-600 hover:bg-slate-700'
+                }
+              >
+                {getPeriodLabel(p)}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Leaderboard Card */}
