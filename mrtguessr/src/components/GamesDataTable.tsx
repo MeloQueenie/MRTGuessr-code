@@ -36,16 +36,21 @@ export function GamesDataTable({
   const columns: ColumnDef<UserGame>[] = [
     {
       accessorKey: 'completedAt',
-      header: 'Date',
+      header: 'Date & Time',
       cell: ({ row }) => {
         const date = new Date(row.getValue('completedAt'))
         return (
           <div className="font-medium">
-            {date.toLocaleDateString('en-US', {
+            <div>{date.toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
               year: 'numeric',
-            })}
+            })}</div>
+            <div className="text-sm text-slate-400">{date.toLocaleTimeString('en-US', {
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+            })}</div>
           </div>
         )
       },

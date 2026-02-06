@@ -167,8 +167,8 @@ def get_user_games(identifier):
         (user_id,),
         fetchone=True
     )
-    total_score = stats_result['total_score'] or 0
-    avg_score = (total_score // stats_result['games_count']) if stats_result['games_count'] and stats_result['games_count'] > 0 else 0
+    total_all_game_score = stats_result['total_score'] or 0
+    avg_score = (total_all_game_score // stats_result['games_count']) if stats_result['games_count'] and stats_result['games_count'] > 0 else 0
 
     # Get games
     games_query = """
@@ -199,7 +199,7 @@ def get_user_games(identifier):
         'total': total,
         'stats': {
             'totalGames': total,
-            'totalScore': total_score,
+            'totalScore': total_all_game_score,
             'avgScore': avg_score
         }
     })
