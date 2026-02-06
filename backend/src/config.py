@@ -23,4 +23,7 @@ OAUTH_AUTHORIZATION_URL = os.environ.get('OAUTH_AUTHORIZATION_URL', 'https://dis
 OAUTH_TOKEN_URL = os.environ.get('OAUTH_TOKEN_URL', 'https://discord.com/api/oauth2/token')
 OAUTH_USER_URL = os.environ.get('OAUTH_USER_URL', 'https://discord.com/api/users/@me')
 
+# Discord Webhook
+DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL', None)
+
 print(f"Using database URL: {DATABASE_URL}")

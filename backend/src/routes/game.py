@@ -1,13 +1,81 @@
 from flask import Blueprint, jsonify, request
 import random
 import math
+import requests
 from data import get_panorama_data
 from utils.scoreDist import calc_y
 from db import execute_query
 from psycopg2.extras import Json
 from routes.auth import get_user_from_token
+from config import DISCORD_WEBHOOK_URL
 
 game_bp = Blueprint('game', __name__)
+
+# -- Helper Functions --
+def post_discord_webhook(message: str):
+    if not DISCORD_WEBHOOK_URL:
+        return
+
+    data = {
+        "content": message
+    }
+    try:
+        response = requests.post(DISCORD_WEBHOOK_URL, json=data)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Error posting to Discord webhook: {e}")
+
+def send_game_results_discord(game_data):
+    """
+    Send game results to Discord webhook with an embed.
+    game_data should contain: username, display_name, profile_picture, guess_results, total_score
+    """
+    if not DISCORD_WEBHOOK_URL:
+        return
+
+    # Build fields for each round
+    fields = []
+    for result in game_data.get('guess_results', []):
+        round_num = result.get('roundNumber', '?')
+        town = result.get('town', 'Unknown')
+        score = result.get('score', 0)
+        distance = result.get('distance', 0)
+
+        fields.append({
+            "name": f"Round {round_num}: {town}",
+            "value": f"**{score:,}** points ({distance:.1f}m away)",
+            "inline": False
+        })
+    total_score = game_data.get('total_score', 0)
+
+    seconds = int(game_data.get("time_taken", 0))
+    minutes, secs = divmod(seconds, 60)
+    natural_time = f"{minutes}m {secs}s" if minutes else f"{secs}s"
+    
+    embed = {
+        "author": {
+            "name": game_data.get('display_name') or "Anonymous",
+            "icon_url": game_data.get('profile_picture') or "https://mrtguessr.seshan.xyz/logo192.png"
+        },
+        "title": "MRTGuessr Score Card",
+        "description": f"Total score of **{total_score:,}** points in {natural_time}!",
+        "color": 0x34D399,
+        "fields": fields,
+        "footer": {
+            "text": "MRTGuessr"
+        },
+        "timestamp": game_data.get('completed_at', '')
+    }
+
+    webhook_data = {
+        "embeds": [embed]
+    }
+
+    try:
+        response = requests.post(DISCORD_WEBHOOK_URL, json=webhook_data)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Error posting to Discord webhook: {e}")
 
 # -- Queries --
 def db_get_total_score(game_uuid):
@@ -191,6 +259,37 @@ def submit_guess(game_uuid):
             "UPDATE games SET completed_at = CURRENT_TIMESTAMP WHERE uuid = %s",
             (str(game_uuid),)
         )
+
+        # Fetch complete game data for Discord webhook
+        game_results = execute_query(
+            """SELECT g.guess_results, g.completed_at, g.user_id,
+                      u.display_name, u.username, u.profile_picture
+               FROM games g
+               LEFT JOIN users u ON g.user_id = u.id
+               WHERE g.uuid = %s""",
+            (str(game_uuid),),
+            fetchone=True
+        )
+
+        time_taken = execute_query(
+            """SELECT EXTRACT(EPOCH FROM (completed_at - created_at)) AS time_taken
+               FROM games
+               WHERE uuid = %s""",
+            (str(game_uuid),),
+            fetchone=True
+        )
+
+        if game_results:
+            total_score = db_get_total_score(game_uuid)
+            send_game_results_discord({
+                'username': game_results['username'],
+                'display_name': game_results['display_name'],
+                'profile_picture': game_results['profile_picture'],
+                'guess_results': game_results['guess_results'],
+                'total_score': total_score,
+                'completed_at': game_results['completed_at'].isoformat() if game_results['completed_at'] else None,
+                'time_taken': time_taken['time_taken'] if time_taken else None
+            })
 
     return jsonify(guess_result)
 
