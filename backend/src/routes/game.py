@@ -58,6 +58,7 @@ def send_game_results_discord(game_data):
             "icon_url": game_data.get('profile_picture') or "https://mrtguessr.seshan.xyz/logo192.png"
         },
         "title": "MRTGuessr Score Card",
+        "url": f"https://mrtguessr.seshan.xyz/game/results/{game_data.get('game_uuid')}",
         "description": f"Total score of **{total_score:,}** points in {natural_time}!",
         "color": 0x34D399,
         "fields": fields,
@@ -282,6 +283,7 @@ def submit_guess(game_uuid):
         if game_results:
             total_score = db_get_total_score(game_uuid)
             send_game_results_discord({
+                'game_uuid': str(game_uuid),
                 'username': game_results['username'],
                 'display_name': game_results['display_name'],
                 'profile_picture': game_results['profile_picture'],
