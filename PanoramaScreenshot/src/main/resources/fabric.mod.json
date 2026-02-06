@@ -1,0 +1,28 @@
+{
+	"schemaVersion": 1,
+	"id": "panorama_screenshot",
+	"version": "${version}",
+	"name": "Panorama Screenshot",
+	"description": "Use unused code in the vanilla client to make panorama screenshots just as MOJANG does!",
+	"authors": [
+		"Fridtjof Goes"
+	],
+	"contact": {
+		"homepage": "https://www.fridtjof.me/",
+		"sources": "https://github.com/Fridtjof-DE/PanoramaScreenshot"
+	},
+	"license": "LGPL-3.0-or-later",
+	"icon": "assets/panorama_screenshot/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"me.fridtjof.panorama_screenshot.PanoramaCraft"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.15.3",
+		"minecraft": "~1.21.8",
+		"java": ">=17",
+		"fabric-api": ">=0.133.4+1.21.8"
+	}
+}

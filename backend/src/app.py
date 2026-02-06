@@ -23,6 +23,7 @@ from db import init_db
 from routes.health import health_bp
 from routes.game import game_bp
 from routes.panorama import panorama_bp
+from routes.service import service_bp
 from routes.tiles import tiles_bp
 from routes.static import static_bp
 from routes.auth import auth_bp
@@ -34,6 +35,7 @@ CORS(app, supports_credentials=True)
 app.register_blueprint(health_bp)
 app.register_blueprint(game_bp)
 app.register_blueprint(panorama_bp)
+app.register_blueprint(service_bp)
 app.register_blueprint(tiles_bp)
 app.register_blueprint(static_bp)
 app.register_blueprint(auth_bp)
