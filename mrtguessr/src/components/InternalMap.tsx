@@ -4,6 +4,22 @@ import { useQuery } from '@tanstack/react-query'
 import { API_URL, fetchInternalPanoramaData, fetchDynmapNewData } from '@/lib/api'
 import { minecraftToLeaflet } from '@/lib/coordinates'
 
+// Generate a stable colour from a string (town name)
+function stringToColor(str: string): string {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+    hash = hash & hash // Convert to 32bit integer
+  }
+
+  // Convert hash to HSL for better colour distribution
+  const hue = Math.abs(hash % 360)
+  const saturation = 65 + (Math.abs(hash >> 8) % 20) // 65-85%
+  const lightness = 45 + (Math.abs(hash >> 16) % 15) // 45-60%
+
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+}
+
 export function InternalMap() {
   const { data: panoramaData, isLoading, error } = useQuery({
     queryKey: ['internalPanoramaData'],
@@ -48,13 +64,14 @@ export function InternalMap() {
         />
         {panoramaData && Object.entries(panoramaData).map(([panoramaId, data]) => {
           const { lat, lng } = minecraftToLeaflet(data.x, data.z)
+          const townColor = stringToColor(data.town)
           return (
             <CircleMarker
               key={panoramaId}
               center={[lat, lng]}
               radius={3}
-              color="red"
-              fillColor="red"
+              color={townColor}
+              fillColor={townColor}
               fillOpacity={0.6}
             >
               <Popup>
