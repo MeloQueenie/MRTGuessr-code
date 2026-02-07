@@ -2,15 +2,10 @@ import { Link } from '@tanstack/react-router'
 
 import { useState } from 'react'
 import {
-  ChevronDown,
-  ChevronRight,
   Home,
   LogIn,
   Menu,
-  Network,
-  RefreshCw,
-  SquareFunction,
-  StickyNote,
+  GitBranch,
   Trophy,
   User,
   X,
@@ -106,6 +101,7 @@ export default function Header() {
               className:
                 'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
             }}
+            viewTransition
           >
             <Home size={20} />
             <span className="font-medium">Home</span>
@@ -118,6 +114,7 @@ export default function Header() {
               className:
                 'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
             }}
+            viewTransition
           >
             <Trophy size={20} />
             <span className="font-medium">Leaderboard</span>
@@ -129,6 +126,11 @@ export default function Header() {
             Git Hash: {__GIT_HASH__}
           </div>
         )}
+        <div className="p-4 border-t border-gray-700 text-xs text-gray-500 text-center">
+          <a href="https://github.com/MeloQueenie/MRTGuessr-code" target="_blank" className="flex items-center justify-center gap-2 text-cyan-500 hover:underline">
+                <GitBranch size={16} /> <span>View on GitHub</span>
+          </a>
+        </div>
         <div className="p-4 border-t border-gray-700 text-xs text-gray-500 text-center">
           <img src="/pixl-wordmark-transparent.png" alt="Global Affairs Pixl Logo" className="h-6 w-auto mt-2 mx-auto"/>
           A Global Affairs Pixl development project.

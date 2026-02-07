@@ -17,6 +17,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { logoUrl, getHealth, startGame, fetchGameStatistics } from '@/lib/api'
 import { ConstructionIcon, Dot } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 export const Route = createFileRoute('/')({component: App })
 
@@ -24,6 +25,8 @@ function App() {
   const navigate = useNavigate({
     from: "/"
   });
+
+  const auth = useAuth();
 
   const {data: healthData} = useQuery({
     queryKey: ['health'],
@@ -110,10 +113,11 @@ function App() {
       </section>
 
       <section className="py-16 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          
+        <div className="flex justify-center">
+          <iframe src={`https://discord.com/widget?id=1469167263117480070&theme=dark${auth.user ? `&username=${encodeURIComponent(auth.user.username)}` : ''}`} width={"350"} height={"500"} allowTransparency frameBorder={"0"} sandbox={"allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"}></iframe>
         </div>
       </section>
+      
 
       <div className="py-6 text-center text-sm text-gray-500" suppressHydrationWarning>
         © {new Date().getFullYear()} Seshpenguin & MeloQueen.
