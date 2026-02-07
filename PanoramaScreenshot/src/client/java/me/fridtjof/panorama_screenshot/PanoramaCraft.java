@@ -77,8 +77,8 @@ public class PanoramaCraft implements ClientModInitializer {
 				// Upload to API in a separate thread to not block the game
 				new Thread(() -> {
 					try {
-						// Wait a bit for the files to be written
-						Thread.sleep(500);
+						// Wait for all panorama files to be fully written
+						waitForPanoramaFiles();
 						String panoramaFile = uploadPanoramaToAPI(playerX, playerZ, client);
 						if (panoramaFile != null) {
 							Text successText = Text.literal(panoramaFile).formatted(Formatting.UNDERLINE).styled((style) -> {
@@ -156,6 +156,42 @@ public class PanoramaCraft implements ClientModInitializer {
 			return new TownInfo("N/A", "N/A", Double.MAX_VALUE);
 		}
 		return nearest;
+	}
+
+	private void waitForPanoramaFiles() throws InterruptedException {
+		// Wait for all 6 panorama files to exist and be stable (not still being written)
+		long[] lastSizes = new long[6];
+		int maxAttempts = 20; // 20 attempts * 250ms = 5 seconds max wait
+
+		for (int attempt = 0; attempt < maxAttempts; attempt++) {
+			Thread.sleep(250);
+			boolean allFilesReady = true;
+
+			for (int i = 0; i < 6; i++) {
+				File panoramaFile = new File(SCREENSHOT_DIR, "panorama_" + i + ".png");
+
+				if (!panoramaFile.exists() || panoramaFile.length() == 0) {
+					allFilesReady = false;
+					break;
+				}
+
+				// Check if file size is stable (not still being written)
+				long currentSize = panoramaFile.length();
+				if (lastSizes[i] != currentSize) {
+					lastSizes[i] = currentSize;
+					allFilesReady = false;
+					break;
+				}
+			}
+
+			if (allFilesReady && attempt > 0) {
+				// All files exist and sizes are stable
+				LOGGER.info("All panorama files ready after {}ms", (attempt + 1) * 250);
+				return;
+			}
+		}
+
+		LOGGER.warn("Panorama files may not be fully ready after waiting");
 	}
 
 	private String uploadPanoramaToAPI(double playerX, double playerZ, MinecraftClient client) throws IOException, InterruptedException {

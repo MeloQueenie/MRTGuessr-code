@@ -92,6 +92,8 @@ def db_get_leaderboard(top_n=100, period='all_time'):
     date_filter = ""
     if period == 'daily':
         date_filter = "AND completed_at >= CURRENT_DATE"
+    elif period == 'weekly':
+        date_filter = "AND completed_at >= DATE_TRUNC('week', CURRENT_DATE)"
     elif period == 'monthly':
         date_filter = "AND completed_at >= DATE_TRUNC('month', CURRENT_DATE)"
     elif period == 'yearly':
@@ -134,14 +136,14 @@ def game_statistics():
 def game_leaderboard():
     """
     Get the game leaderboard.
-    Query params: period (daily, monthly, yearly, all_time) - defaults to all_time
+    Query params: period (daily, weekly, monthly, yearly, all_time) - defaults to all_time
     Returns: [{"displayName": string, "username": string, "profilePicture": string, "totalScore": number, "createdAt": string}, ...]
     """
     period = request.args.get('period', 'all_time')
-    valid_periods = ['daily', 'monthly', 'yearly', 'all_time']
+    valid_periods = ['daily', 'weekly', 'monthly', 'yearly', 'all_time']
 
     if period not in valid_periods:
-        return jsonify({'error': 'Invalid period. Must be one of: daily, monthly, yearly, all_time'}), 400
+        return jsonify({'error': 'Invalid period. Must be one of: daily, weekly, monthly, yearly, all_time'}), 400
 
     leaderboard = db_get_leaderboard(period=period)
     return jsonify([

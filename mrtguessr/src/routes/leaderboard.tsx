@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Trophy, User, ArrowLeft, Medal } from 'lucide-react'
 import { z } from 'zod'
 
-type Period = 'daily' | 'monthly' | 'yearly' | 'all_time'
+type Period = 'daily' | 'weekly' | 'monthly' | 'all_time'
 
+// To enable more periods: add them to the enum below and uncomment in the button array (line ~96)
 const leaderboardSearchSchema = z.object({
-  period: z.enum(['daily', 'monthly', 'yearly', 'all_time']).optional().default('daily'),
+  period: z.enum(['weekly', 'all_time']).optional().default('weekly'),
 })
 
 export const Route = createFileRoute('/leaderboard')({
@@ -71,8 +72,8 @@ function RouteComponent() {
   const getPeriodLabel = (p: Period) => {
     switch (p) {
       case 'daily': return 'Today'
+      case 'weekly': return 'This Week'
       case 'monthly': return 'This Month'
-      case 'yearly': return 'This Year'
       case 'all_time': return 'All Time'
     }
   }
@@ -91,9 +92,9 @@ function RouteComponent() {
             Top players by total score
           </p>
 
-          {/* Period Selection */}
+          {/* Period Selection - To enable more: add 'daily'/'monthly' below and to schema above */}
           <div className="flex justify-center gap-2 flex-wrap">
-            {(['daily', 'monthly', 'yearly', 'all_time'] as Period[]).map((p) => (
+            {(['weekly', 'all_time'] as const).map((p) => (
               <Button
                 key={p}
                 onClick={() => navigate({ search: { period: p } })}

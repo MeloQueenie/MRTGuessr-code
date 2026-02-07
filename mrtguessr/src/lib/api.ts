@@ -279,7 +279,7 @@ export async function updateUserProfile(identifier: string, description: string)
   return data;
 }
 
-export async function fetchLeaderboard(period: 'daily' | 'monthly' | 'yearly' | 'all_time' = 'all_time'): Promise<LeaderboardEntry[]> {
+export async function fetchLeaderboard(period: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'all_time' = 'all_time'): Promise<LeaderboardEntry[]> {
   let res = await fetch(`${API_URL}/game/leaderboard?period=${period}`, {
     credentials: 'include',
   });
