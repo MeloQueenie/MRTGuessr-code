@@ -5,6 +5,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.ClickEvent;
@@ -78,13 +79,13 @@ public class PanoramaCraft implements ClientModInitializer {
 					try {
 						// Wait a bit for the files to be written
 						Thread.sleep(500);
-						String panoramaFile = uploadPanoramaToAPI(playerX, playerZ);
+						String panoramaFile = uploadPanoramaToAPI(playerX, playerZ, client);
 						if (panoramaFile != null) {
 							Text successText = Text.literal(panoramaFile).formatted(Formatting.UNDERLINE).styled((style) -> {
-								return style.withClickEvent(new ClickEvent.OpenFile(SCREENSHOT_DIR.getAbsolutePath()));
+								return style.withClickEvent(new ClickEvent.OpenFile(config.assetRepoDir + "/mcPhotosphere/pan/" + panoramaFile));
 							});
 							client.execute(() -> {
-								client.player.sendMessage(Text.literal("Panorama converted: ").append(successText), false);
+								client.player.sendMessage(Text.literal("Done! ").append(successText), false);
 							});
 						} else {
 							client.execute(() -> {
@@ -154,11 +155,10 @@ public class PanoramaCraft implements ClientModInitializer {
 		if (nearest == null) {
 			return new TownInfo("N/A", "N/A", Double.MAX_VALUE);
 		}
-
 		return nearest;
 	}
 
-	private String uploadPanoramaToAPI(double playerX, double playerZ) throws IOException, InterruptedException {
+	private String uploadPanoramaToAPI(double playerX, double playerZ, MinecraftClient client) throws IOException, InterruptedException {
 		// Build multipart form data
 		String boundary = UUID.randomUUID().toString();
 		HttpClient httpClient = HttpClient.newHttpClient();
@@ -238,9 +238,9 @@ public class PanoramaCraft implements ClientModInitializer {
 			Path outputPath = panDir.resolve(outputFileName);
 			Files.write(outputPath, response.body(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-			// Append to CSV with floored coordinates
-			int flooredX = (int) Math.floor(playerX);
-			int flooredZ = (int) Math.floor(playerZ);
+			// Append to CSV with block coordinates (truncate the 0.5 center offset)
+			int flooredX = (int) playerX;
+			int flooredZ = (int) playerZ;
 
 			// Find nearest town
 			TownInfo nearestTown = findNearestTown(flooredX, flooredZ);
@@ -249,6 +249,9 @@ public class PanoramaCraft implements ClientModInitializer {
 			Files.writeString(csvPath, csvLine, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
 
 			LOGGER.info("Panorama saved: {} at X={}, Z={} (nearest: {} - {})", outputFileName, flooredX, flooredZ, nearestTown.name, nearestTown.rank);
+			client.execute(() -> {
+				client.player.sendMessage(Text.literal("Panorama saved: " + outputFileName + " at X=" + flooredX + ", Z=" + flooredZ + " (nearest town: " + nearestTown.name + " - " + nearestTown.rank + ")").formatted(Formatting.GREEN), false);
+			});
 			return outputFileName;
 		} else {
 			LOGGER.error("API returned error: {} - {}", response.statusCode(), new String(response.body(), StandardCharsets.UTF_8));

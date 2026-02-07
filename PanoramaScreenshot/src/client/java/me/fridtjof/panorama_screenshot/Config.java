@@ -15,7 +15,7 @@ public class Config {
     private static Config instance;
 
     // Config values
-    public String apiUrl = "http://localhost:3000/api/service/panorama_convert";
+    public String apiUrl = "https://mrtguessr.seshan.xyz/api/service/panorama_convert";
     public String assetRepoDir = "/home/seshpenguin/Documents/MRTGuessr-code/backend/MRTGuessr-assets";
 
     public static Config load() {
