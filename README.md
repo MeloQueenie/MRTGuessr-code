@@ -3,6 +3,26 @@ A game by Seshpenguin and MeloQueen
 
 Backend is in the `backend/` folder. Frontend is in the `mrtguessr/` folder.
 
+To run the game, you will need a .env filled with the following variables:
+```
+POSTGRES_USER=user
+POSTGRES_PASSWORD=password
+POSTGRES_DB=mrtguessr
+DATABASE_URL=postgresql://user:password@localhost:5432/mrtguessr
+
+VITE_PUBLIC_URL=http://localhost:3000
+
+# Optional
+OAUTH_CLIENT_ID=
+OAUTH_CLIENT_SECRET=
+DISCORD_WEBHOOK_URL=
+
+# Only for prod with Cloudflare
+CLOUDFLARE_TOKEN=
+```
+
+> Comment out the cloudflared section in `docker-compose.yml` for local development.
+
 Run the game locally by running
 ```bash
 docker compose up --build
