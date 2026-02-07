@@ -121,7 +121,7 @@ export default function Header() {
           </Link>
         </nav>
         {__BUILD_DATE__ && __GIT_HASH__ && (
-          <div className="p-4 border-t border-gray-700 text-xs text-gray-500 text-center">
+          <div className="p-4 border-t border-gray-700 text-xs text-gray-500 text-center" suppressHydrationWarning>
             Build Date: {new Date(__BUILD_DATE__).toLocaleString()} <br />
             Git Hash: {__GIT_HASH__}
           </div>

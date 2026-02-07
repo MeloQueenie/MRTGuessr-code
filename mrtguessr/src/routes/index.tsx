@@ -57,11 +57,11 @@ function App() {
             />
           </div>
           <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
-            Guess cities and locations around the MRT New World!
+            Guess cities and locations around the <a href="https://minecartrapidtransit.net" className='underline decoration-dotted'>MinecartRapidTransit Server</a>!
           </p>
           <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8 text-orange-400">
             <ConstructionIcon className="inline-block mr-2 mb-1 animate-pulse" size={20} />
-            MRTGuessr is under construction! There will be missing features, bugs and data resets!
+            MRTGuessr is under construction! <br />New locations are being added regularly, and you may encounter bugs.
             <ConstructionIcon className="inline-block ml-2 mb-1 animate-pulse" size={20} />
           </p>
           <div className={`flex flex-col items-center gap-4 animate-all duration-500 ${isRefetching ? 'opacity-0' : 'opacity-100'}`}>
@@ -79,7 +79,7 @@ function App() {
                 >
                   Play Now!
                 </div>
-                <p className="text-sm text-gray-500 mt-4">
+                <p className="text-sm text-gray-500 mt-4" suppressHydrationWarning>
                   {gameStatistics ? (
                     <>
                       <span>{gameStatistics.totalPanoramas.toLocaleString()} panoramas</span>
@@ -113,7 +113,7 @@ function App() {
       </section>
 
       <section className="py-16 px-6 max-w-7xl mx-auto">
-        <div className="flex justify-center">
+        <div className="flex justify-center" suppressHydrationWarning>
           <iframe src={`https://discord.com/widget?id=1469167263117480070&theme=dark${auth.user ? `&username=${encodeURIComponent(auth.user.username)}` : ''}`} width={"350"} height={"500"} allowTransparency frameBorder={"0"} sandbox={"allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"}></iframe>
         </div>
       </section>
