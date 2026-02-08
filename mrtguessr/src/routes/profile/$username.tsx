@@ -12,6 +12,41 @@ import { GamesDataTable } from '@/components/GamesDataTable'
 
 export const Route = createFileRoute('/profile/$username')({
   component: RouteComponent,
+  loader: async ({ params }) => {
+    const profile = await fetchUserProfile(params.username)
+    return profile
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) {
+      return {
+        meta: [
+          { title: 'MRTGuessr - User Profile' },
+        ],
+      }
+    }
+
+    const title = `${loaderData.displayName} (@${loaderData.username}) - MRTGuessr`
+    const description = loaderData.description
+      ? `${loaderData.description.substring(0, 200)}${loaderData.description.length > 200 ? '...' : ''}`
+      : `Check out ${loaderData.displayName}'s MRTGuessr profile!`
+
+    return {
+      meta: [
+        { title },
+        { name: 'description', content: description },
+        // Open Graph
+        { property: 'og:title', content: title },
+        { property: 'og:description', content: description },
+        { property: 'og:image', content: loaderData.profilePicture || logoUrl.Full },
+        { property: 'og:type', content: 'profile' },
+        // Twitter Card
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: title },
+        { name: 'twitter:description', content: description },
+        { name: 'twitter:image', content: loaderData.profilePicture || logoUrl.Full },
+      ],
+    }
+  },
 })
 
 function RouteComponent() {
@@ -23,10 +58,12 @@ function RouteComponent() {
   const [editedDescription, setEditedDescription] = useState('')
   const [gamesPage, setGamesPage] = useState(1)
   const gamesLimit = 10
+  const loaderData = Route.useLoaderData()
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['userProfile', username],
     queryFn: () => fetchUserProfile(username),
+    initialData: loaderData,
     retry: false,
   })
 
