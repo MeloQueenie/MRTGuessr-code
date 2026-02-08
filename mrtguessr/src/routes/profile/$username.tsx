@@ -180,12 +180,18 @@ function RouteComponent() {
 
                 {isEditing ? (
                   <div className="space-y-3">
-                    <Textarea
-                      value={editedDescription}
-                      onChange={(e) => setEditedDescription(e.target.value)}
-                      placeholder="Write yourself a description! (Markdown supported)"
-                      className="min-h-[150px] font-mono text-sm"
-                    />
+                    <div className="relative">
+                      <Textarea
+                        value={editedDescription}
+                        onChange={(e) => setEditedDescription(e.target.value)}
+                        placeholder="Write yourself a description! (Markdown supported)"
+                        className="min-h-[150px] font-mono text-sm"
+                        maxLength={4096}
+                      />
+                      <div className={`text-sm mt-1 ${editedDescription.length > 3900 ? 'text-orange-400' : 'text-slate-500'}`}>
+                        {editedDescription.length} / 4096 characters
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <Button
                         onClick={handleSaveClick}
