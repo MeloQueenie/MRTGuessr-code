@@ -15,16 +15,67 @@ const leaderboardSearchSchema = z.object({
 export const Route = createFileRoute('/leaderboard')({
   component: RouteComponent,
   validateSearch: leaderboardSearchSchema,
+  loader: async (ctx: any) => {
+    // Access search params from location
+    const searchParams = new URLSearchParams(ctx.location.search)
+    const period = (searchParams.get('period') as 'weekly' | 'all_time') || 'weekly'
+    const leaderboard = await fetchLeaderboard(period)
+    return { leaderboard, period }
+  },
+  head: ({ loaderData }) => {
+    if (!loaderData) {
+      return {
+        meta: [
+          { title: 'MRTGuessr - Leaderboard' },
+        ],
+      }
+    }
+
+    const { leaderboard, period } = loaderData
+    const periodLabel = period === 'weekly' ? 'This Week' : 'All Time'
+    const title = `MRTGuessr Leaderboard - ${periodLabel}`
+
+    // Build top players description
+    let description = `${periodLabel}'s top players on MRTGuessr`
+    if (leaderboard && leaderboard.length > 0) {
+      const topThree = leaderboard.slice(0, 3)
+        .map((entry, idx) => `${idx + 1}. ${entry.displayName} - ${entry.totalScore.toLocaleString()} pts`)
+        .join('\n')
+      description = `${periodLabel}'s top players on MRTGuessr:\n\n${topThree}`
+    }
+
+    return {
+      meta: [
+        { title },
+        { name: 'description', content: description },
+        // Open Graph
+        { property: 'og:title', content: title },
+        { property: 'og:description', content: description },
+        { property: 'og:image', content: logoUrl.Full },
+        { property: 'og:type', content: 'website' },
+        // Twitter Card
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: title },
+        { name: 'twitter:description', content: description },
+        { name: 'twitter:image', content: logoUrl.Full },
+      ],
+    }
+  },
 })
 
 function RouteComponent() {
   const navigate = useNavigate({ from: '/leaderboard' })
   const { period } = Route.useSearch()
+  const loaderData = Route.useLoaderData()
 
-  const { data: leaderboard, isLoading, error } = useQuery({
+  // Use loader data as initial data for the query
+  const { data, isLoading, error } = useQuery({
     queryKey: ['leaderboard', period],
     queryFn: () => fetchLeaderboard(period),
+    initialData: period === loaderData.period ? loaderData.leaderboard : undefined,
   })
+
+  const leaderboard = data
 
   if (isLoading) {
     return (
