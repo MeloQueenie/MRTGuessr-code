@@ -63,6 +63,12 @@ def init_db():
         END $$;
     """)
 
+    # Add game_type column
+    cur.execute("""
+        ALTER TABLE games
+        ADD COLUMN IF NOT EXISTS game_type VARCHAR(50);
+    """)
+
     # Performance indexes
     cur.execute("""
         CREATE INDEX IF NOT EXISTS idx_games_user_id

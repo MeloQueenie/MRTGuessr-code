@@ -206,10 +206,17 @@ export async function fetchDynmapNewData(): Promise<DynmapData> {
   return data;
 }
 
-export async function startGame(): Promise<StartData> {
-  let res = await fetch(`${API_URL}/game/start`,
-    { method: 'POST', credentials: 'include' }
-  );
+export async function startGame(gameType: 'NORMAL' | 'MC_GUESS'): Promise<StartData> {
+  let res = await fetch(`${API_URL}/game/start`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({
+      gameType,
+    }),
+  });
   let data = await res.json();
   return data;
 }

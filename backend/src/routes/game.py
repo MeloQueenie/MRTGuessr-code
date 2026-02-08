@@ -171,17 +171,26 @@ def internal_panorama_data():
 def start_game():
     """
     Start a new game and return a UUID.
+    Expects: {"gameType": "NORMAL" | "MC_GUESS"}
     Returns: {"uuid": "..."}
     """
+    data = request.json or {}
+    game_type = data.get('gameType')
+
+    # Validate game_type
+    valid_game_types = ['NORMAL', 'MC_GUESS']
+    if game_type not in valid_game_types:
+        return jsonify({'error': f'Invalid game type. Must be one of: {", ".join(valid_game_types)}'}), 400
+
     token = request.cookies.get('auth_token')
     user = get_user_from_token(token)
     print("Auth token:", token)
-    print("Starting game for user:", user)
+    print("Starting game for user:", user, "with game type:", game_type)
     user_id = user['id'] if user else None
 
     result = execute_query(
-        "INSERT INTO games (user_id) VALUES (%s) RETURNING uuid",
-        (user_id,),
+        "INSERT INTO games (user_id, game_type) VALUES (%s, %s) RETURNING uuid",
+        (user_id, game_type),
         fetchone=True
     )
 

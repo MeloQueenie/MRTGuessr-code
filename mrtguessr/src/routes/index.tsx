@@ -14,7 +14,7 @@
   // You should have received a copy of the GNU Affero General Public License
   // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { logoUrl, getHealth, startGame, fetchGameStatistics } from '@/lib/api'
 import { ConstructionIcon, Dot } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -33,10 +33,11 @@ function App() {
     queryFn: getHealth,
     refetchInterval: 10000,
   });
-  const {refetch: refetchStart, isRefetching} = useQuery({
-    queryKey: ['startGame'],
-    queryFn: startGame,
-    enabled: false,
+  const startGameMutation = useMutation({
+    mutationFn: (gameType: 'NORMAL' | 'MC_GUESS') => startGame(gameType),
+    onSuccess: (data) => {
+      navigate({ to: `/game/${data.uuid}`, viewTransition: true });
+    },
   });
 
   const { data: gameStatistics } = useQuery({
@@ -64,17 +65,11 @@ function App() {
             MRTGuessr is under construction! <br />New locations are being added regularly, and you may encounter bugs.
             <ConstructionIcon className="inline-block ml-2 mb-1 animate-pulse" size={20} />
           </p>
-          <div className={`flex flex-col items-center gap-4 animate-all duration-500 ${isRefetching ? 'opacity-0' : 'opacity-100'}`}>
+          <div className={`flex flex-col items-center gap-4 animate-all duration-500 ${startGameMutation.isPending ? 'opacity-0' : 'opacity-100'}`}>
             {healthData ? (
               <>
                 <div
-                  onClick={() => {
-                    refetchStart().then(({ data }) => {
-                      if (data && data.uuid) {
-                        navigate({ to: `/game/${data.uuid}`, viewTransition: true });
-                      }
-                    });
-                  }}
+                  onClick={() => startGameMutation.mutate('NORMAL')}
                   className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50 select-none cursor-pointer"
                 >
                   Play Now!
