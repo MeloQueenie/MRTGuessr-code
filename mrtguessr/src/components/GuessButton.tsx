@@ -3,12 +3,16 @@ import { guessButtonPartsUrl } from '@/lib/api';
 interface GuessButtonProps {
   onClick: () => void;
   className?: string;
+  disabled?: boolean;
 }
 
-const GuessButton = ({ onClick, className = '' }: GuessButtonProps) => (
+const GuessButton = ({ onClick, className = '', disabled = false }: GuessButtonProps) => (
   <button
     onClick={onClick}
-    className={`flex h-[60px] border-0 bg-transparent cursor-pointer p-0 w-full ${className}`}
+    disabled={disabled}
+    className={`flex h-[60px] border-0 bg-transparent p-0 w-full transition-opacity duration-200 ${
+      disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+    } ${className}`}
   >
     <img src={guessButtonPartsUrl.LCorner} alt="" className="h-full w-auto flex-shrink-0" />
     <div

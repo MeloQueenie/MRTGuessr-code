@@ -117,6 +117,12 @@ function RouteComponent() {
     return () => setCenterContent(null);
   }, [roundNumber, timeLeft, totalScore, setCenterContent]);
 
+  useEffect(() => {
+    if (roundNumber > 5) {
+      navigate({ to: `/game/results/${uuid}`, replace: true });
+    }
+  }, [roundNumber, navigate, uuid]);
+
   if (isError || roundData?.error ) {
     return <div className="bg-black text-white text-4xl flex items-center justify-center h-[93.5vh]">An error has occurred: {roundData?.error}</div>
   }
@@ -168,13 +174,16 @@ function RouteComponent() {
           />
         </ClientOnly>
         <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] z-[1000] scale-75 md:scale-100 transition-all duration-300 ease-in-out ${!isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <GuessButton onClick={() => {
-            if (markerPosition && roundData) {
-              const coords = leafletToMinecraft(markerPosition[0], markerPosition[1]);
-              console.log(`Guessing at Minecraft coords: x=${coords.x}, z=${coords.z}`);
-              guessMutation.mutate({ guessX: coords.x, guessZ: coords.z });
-            }
-          }} />
+          <GuessButton
+            disabled={!markerPosition || guessMutation.isPending}
+            onClick={() => {
+              if (markerPosition && roundData && !guessMutation.isPending) {
+                const coords = leafletToMinecraft(markerPosition[0], markerPosition[1]);
+                console.log(`Guessing at Minecraft coords: x=${coords.x}, z=${coords.z}`);
+                guessMutation.mutate({ guessX: coords.x, guessZ: coords.z });
+              }
+            }}
+          />
         </div>
       </div>
       {/* Endgame view stats - a white background color rectangle below the map, rounded and height 20% */}
