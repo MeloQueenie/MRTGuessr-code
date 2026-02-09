@@ -56,7 +56,7 @@ def send_game_results_discord(game_data):
     title = "MRTGuessr Custom Score Card" if is_custom else "MRTGuessr Score Card"
     description = f"Total score of **{total_score:,}** points in {natural_time}!"
     if is_custom:
-        description += "\n- *Custom game* -"
+        description += "\n*Custom game*"
 
     embed = {
         "author": {
