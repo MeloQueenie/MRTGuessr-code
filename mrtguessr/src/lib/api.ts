@@ -36,14 +36,21 @@ export const pinpointUrl = {
 }
 
 // --- Interfaces --- //
+export enum GameType {
+  NORMAL = 'NORMAL',
+  MC_GUESS = 'MC_GUESS',
+}
+
 export interface StartData {
   uuid: string;
+  gameType: GameType;
 }
 export interface RoundData {
   panoramaId: number;
   roundNumber: number;
   totalScore: number;
   createdAt: string;
+  gameType: GameType;
   error?: string;
 }
 export interface GuessResult {
@@ -65,6 +72,7 @@ export interface ResultsData {
   displayName: string | null;
   username: string | null;
   profilePicture: string | null;
+  gameType: GameType;
 }
 export interface GameStatisticsData {
   totalPanoramas: number;

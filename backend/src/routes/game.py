@@ -172,7 +172,7 @@ def start_game():
     """
     Start a new game and return a UUID.
     Expects: {"gameType": "NORMAL" | "MC_GUESS"}
-    Returns: {"uuid": "..."}
+    Returns: {"uuid": "...", "gameType": "..."}
     """
     data = request.json or {}
     game_type = data.get('gameType')
@@ -194,7 +194,7 @@ def start_game():
         fetchone=True
     )
 
-    return jsonify({'uuid': str(result['uuid'])})
+    return jsonify({'uuid': str(result['uuid']), 'gameType': game_type})
 
 
 @game_bp.route("/api/game/<uuid:game_uuid>/round", methods=['POST'])
@@ -204,7 +204,7 @@ def get_round(game_uuid):
     Returns: {"panoramaId": 42, "roundNumber": 1, "totalScore": 12345}
     """
     result = execute_query(
-        "SELECT round_number, current_panorama_id, created_at FROM games WHERE uuid = %s",
+        "SELECT round_number, current_panorama_id, created_at, game_type FROM games WHERE uuid = %s",
         (str(game_uuid),),
         fetchone=True
     )
@@ -227,7 +227,8 @@ def get_round(game_uuid):
         'panoramaId': panorama_id,
         'roundNumber': result['round_number'],
         'totalScore': total_score_result,
-        'createdAt': result['created_at'].isoformat()
+        'createdAt': result['created_at'].isoformat(),
+        'gameType': result['game_type']
     })
 
 
@@ -285,7 +286,7 @@ def submit_guess(game_uuid):
     # Mark completed at 5 rounds
     if current_game_data['round_number'] >= 5:
         execute_query(
-            "UPDATE games SET completed_at = CURRENT_TIMESTAMP WHERE uuid = %s",
+            "UPDATE games SET completed_at = CURRENT_TIMESTAMP, round_number = 5 WHERE uuid = %s",
             (str(game_uuid),)
         )
 
@@ -328,10 +329,24 @@ def submit_guess(game_uuid):
 def get_results(game_uuid):
     """
     Get all guess results for a game.
-    Returns: {"results": [...], "roundNumber": 5, "displayName": "...", "username": "..."}
+    Returns:
+    {
+        "results": [
+            {"panoramaId": 42, "distance": 150.5, "score": 4500, "actualX": 48.5, "actualZ": 214.5, "guessX": 100.5, "guessZ": 200.5, "town": "TownName", "roundNumber": 1},
+            ...
+        ],
+        "roundNumber": 5,
+        "totalScore": 23000,
+        "displayName": "PlayerOne",
+        "username": "playerone123",
+        "profilePicture": "https://example.com/profile.jpg",
+        "createdAt": "...",
+        "completedAt": "...",
+        "gameType": "NORMAL"
+    }
     """
     result = execute_query(
-        """SELECT g.guess_results, g.round_number, g.created_at, g.completed_at,
+        """SELECT g.guess_results, g.round_number, g.created_at, g.completed_at, g.game_type,
                   u.display_name, u.username, u.profile_picture
            FROM games g
            LEFT JOIN users u ON g.user_id = u.id
@@ -353,5 +368,6 @@ def get_results(game_uuid):
         'username': result['username'],
         'profilePicture': result['profile_picture'],
         'createdAt': result['created_at'].isoformat(),
-        'completedAt': result['completed_at'].isoformat() if result['completed_at'] else None
+        'completedAt': result['completed_at'].isoformat() if result['completed_at'] else None,
+        'gameType': result['game_type']
     })
