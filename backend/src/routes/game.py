@@ -51,16 +51,22 @@ def send_game_results_discord(game_data):
     seconds = int(game_data.get("time_taken", 0))
     minutes, secs = divmod(seconds, 60)
     natural_time = f"{minutes}m {secs}s" if minutes else f"{secs}s"
-    
+
+    is_custom = game_data.get('is_custom', False)
+    title = "MRTGuessr Custom Score Card" if is_custom else "MRTGuessr Score Card"
+    description = f"Total score of **{total_score:,}** points in {natural_time}!"
+    if is_custom:
+        description += "\n- *Custom game* -"
+
     embed = {
         "author": {
             "name": game_data.get('display_name') or "Anonymous",
             "icon_url": game_data.get('profile_picture') or "https://mrtguessr.seshan.xyz/logo192.png"
         },
-        "title": "MRTGuessr Score Card",
+        "title": title,
         "url": f"https://mrtguessr.seshan.xyz/game/results/{game_data.get('game_uuid')}",
-        "description": f"Total score of **{total_score:,}** points in {natural_time}!",
-        "color": 0x34D399,
+        "description": description,
+        "color": 0xF97316 if is_custom else 0x34D399,  # Orange for custom, green for normal
         "fields": fields,
         "footer": {
             "text": "MRTGuessr"
@@ -339,7 +345,7 @@ def submit_guess(game_uuid):
 
         # Fetch complete game data for Discord webhook
         game_results = execute_query(
-            """SELECT g.guess_results, g.completed_at, g.user_id,
+            """SELECT g.guess_results, g.completed_at, g.user_id, g.is_custom,
                       u.display_name, u.username, u.profile_picture
                FROM games g
                LEFT JOIN users u ON g.user_id = u.id
@@ -366,7 +372,8 @@ def submit_guess(game_uuid):
                 'guess_results': game_results['guess_results'],
                 'total_score': total_score,
                 'completed_at': game_results['completed_at'].isoformat() if game_results['completed_at'] else None,
-                'time_taken': time_taken['time_taken'] if time_taken else None
+                'time_taken': time_taken['time_taken'] if time_taken else None,
+                'is_custom': game_results.get('is_custom', False)
             })
 
     return jsonify(guess_result)
