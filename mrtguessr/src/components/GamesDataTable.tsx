@@ -60,9 +60,17 @@ export function GamesDataTable({
       header: 'Score',
       cell: ({ row }) => {
         const score = row.getValue('totalScore') as number
+        const isCustom = row.original.isCustom
         return (
-          <div className="font-bold text-emerald-400">
-            {score.toLocaleString()}
+          <div className="flex items-center gap-2">
+            <div className="font-bold text-emerald-400">
+              {score.toLocaleString()}
+            </div>
+            {isCustom && (
+              <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded border border-orange-500/50">
+                Custom
+              </span>
+            )}
           </div>
         )
       },

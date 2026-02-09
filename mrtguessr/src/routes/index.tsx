@@ -15,9 +15,11 @@
   // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { logoUrl, getHealth, startGame, fetchGameStatistics } from '@/lib/api'
-import { ConstructionIcon, Dot } from 'lucide-react'
+import { logoUrl, getHealth, startGame, fetchGameStatistics, type CustomGameOptions } from '@/lib/api'
+import { ConstructionIcon, Dot, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useState } from 'react'
+import { MultiSelect } from '@/components/ui/multi-select'
 
 export const Route = createFileRoute('/')({component: App })
 
@@ -28,13 +30,24 @@ function App() {
 
   const auth = useAuth();
 
+  const [showCustomOptions, setShowCustomOptions] = useState(false);
+  const [selectedRanks, setSelectedRanks] = useState<string[]>([]);
+
+  const AVAILABLE_RANKS = [
+    'Special', 'Premier', 'Senator', 'Governor',
+    'Mayor', 'Councillor', 'Community', 'Unranked'
+  ];
+
   const {data: healthData} = useQuery({
     queryKey: ['health'],
     queryFn: getHealth,
     refetchInterval: 10000,
   });
   const startGameMutation = useMutation({
-    mutationFn: (gameType: 'NORMAL' | 'MC_GUESS') => startGame(gameType),
+    mutationFn: ({ gameType, customOptions }: {
+      gameType: 'NORMAL' | 'MC_GUESS',
+      customOptions?: CustomGameOptions
+    }) => startGame(gameType, customOptions),
     onSuccess: (data) => {
       navigate({ to: `/game/${data.uuid}`, viewTransition: true });
     },
@@ -47,7 +60,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <section className="relative py-20 px-6 text-center overflow-hidden">
+      <section className="relative py-20 px-6 text-center">
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
         <div className="relative max-w-5xl mx-auto">
           <div className="flex items-center justify-center gap-6 mb-6">
@@ -60,21 +73,71 @@ function App() {
           <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
             Guess cities and locations around the <a href="https://minecartrapidtransit.net" className='underline decoration-dotted'>MinecartRapidTransit Server</a>!
           </p>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8 text-orange-400">
+          <p className="text-md text-gray-400 max-w-3xl mx-auto mb-8 text-orange-400">
             <ConstructionIcon className="inline-block mr-2 mb-1 animate-pulse" size={20} />
-            MRTGuessr is under construction! <br />New locations are being added regularly, and you may encounter bugs.
-            <ConstructionIcon className="inline-block ml-2 mb-1 animate-pulse" size={20} />
+            MRTGuessr is under construction!<ConstructionIcon className="inline-block ml-2 mb-1 animate-pulse" size={20} /><br />
+            New locations are being added regularly, and you may encounter bugs.
+            
           </p>
           <div className={`flex flex-col items-center gap-4 animate-all duration-500 ${startGameMutation.isPending ? 'opacity-0' : 'opacity-100'}`}>
             {healthData ? (
               <>
                 <div
-                  onClick={() => startGameMutation.mutate('NORMAL')}
+                  onClick={() => {
+                    const customOptions = selectedRanks.length > 0
+                      ? { rankFilter: selectedRanks }
+                      : undefined;
+                    startGameMutation.mutate({ gameType: 'NORMAL', customOptions });
+                  }}
                   className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50 select-none cursor-pointer"
                 >
                   Play Now!
                 </div>
+
+                {/* Custom Game Options */}
+                <div className="w-full max-w-md">
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomOptions(!showCustomOptions)}
+                    className="text-sm text-gray-400 hover:text-gray-300 transition-colors flex items-center gap-2 mx-auto"
+                  >
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${showCustomOptions ? 'rotate-180' : ''}`}
+                    />
+                    Custom Game Options
+                  </button>
+
+                  {showCustomOptions && (
+                    <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700 space-y-4">
+                      <p className="text-sm text-orange-300 block mb-2">Games with custom options won't count toward leaderboards.</p>
+                      <hr className="border-slate-700 mb-3" />
+                      <div>
+                        <label className="text-sm text-white font-semibold block mb-2">
+                          City Rank Filter
+                        </label>
+                        <p className="text-xs text-gray-400 mb-3">
+                          Select specific city ranks to practice with.
+                        </p>
+                        <MultiSelect
+                          options={AVAILABLE_RANKS.map(rank => ({ label: rank, value: rank }))}
+                          selected={selectedRanks}
+                          onChange={setSelectedRanks}
+                          placeholder="Select ranks..."
+                        />
+                      </div>
+                      <hr className="border-slate-700 mb-3" />
+
+                      {selectedRanks.length > 0 && (
+                        <div className="text-xs text-cyan-400">
+                          {selectedRanks.length} rank{selectedRanks.length !== 1 ? 's' : ''} selected
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
                 <p className="text-sm text-gray-500 mt-4" suppressHydrationWarning>
+                  <hr className="border-slate-700 my-4" />
                   {gameStatistics ? (
                     <>
                       <span>{gameStatistics.totalPanoramas.toLocaleString()} panoramas</span>

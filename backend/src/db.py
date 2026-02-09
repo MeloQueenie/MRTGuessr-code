@@ -69,6 +69,18 @@ def init_db():
         ADD COLUMN IF NOT EXISTS game_type VARCHAR(50);
     """)
 
+    # Add custom_options JSONB column to store filter settings
+    cur.execute("""
+        ALTER TABLE games
+        ADD COLUMN IF NOT EXISTS custom_options JSONB DEFAULT NULL;
+    """)
+
+    # Add is_custom boolean flag for fast leaderboard filtering
+    cur.execute("""
+        ALTER TABLE games
+        ADD COLUMN IF NOT EXISTS is_custom BOOLEAN DEFAULT FALSE;
+    """)
+
     # Performance indexes
     cur.execute("""
         CREATE INDEX IF NOT EXISTS idx_games_user_id
@@ -78,6 +90,19 @@ def init_db():
     cur.execute("""
         CREATE INDEX IF NOT EXISTS idx_games_created_at
         ON games(created_at);
+    """)
+
+    # Index for custom games filtering
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_games_is_custom
+        ON games(is_custom);
+    """)
+
+    # Composite index for leaderboard queries
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_games_completed_custom
+        ON games(completed_at, is_custom)
+        WHERE completed_at IS NOT NULL;
     """)
 
     conn.commit()

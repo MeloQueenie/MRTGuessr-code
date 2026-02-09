@@ -140,6 +140,16 @@ function RouteComponent() {
             </div>
           )}
 
+          {/* Custom Game Indicator */}
+          {resultData?.isCustom && (
+            <div className="bg-orange-500/20 border border-orange-500 rounded-lg p-4 text-center mb-4 max-w-2xl mx-auto">
+              <p className="font-semibold">Custom Game</p>
+              <p className="text-sm mt-1 text-gray-300">
+                This game used custom options and doesn't count toward leaderboards
+              </p>
+            </div>
+          )}
+
           <div className="flex flex-col items-center gap-2 text-xl text-slate-300">
             <p className="flex items-center gap-2">
               <Clock size={20} />

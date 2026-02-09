@@ -105,7 +105,9 @@ def db_get_leaderboard(top_n=100, period='all_time'):
            FROM (
                SELECT user_id, SUM((guess_result->>'score')::int) AS total_score, MIN(created_at) AS created_at
                FROM games, jsonb_array_elements(guess_results) AS guess_result
-               WHERE completed_at IS NOT NULL {date_filter}
+               WHERE completed_at IS NOT NULL
+                 AND is_custom = FALSE
+                 {date_filter}
                GROUP BY user_id
            ) g
            JOIN users u ON g.user_id = u.id
@@ -171,16 +173,32 @@ def internal_panorama_data():
 def start_game():
     """
     Start a new game and return a UUID.
-    Expects: {"gameType": "NORMAL" | "MC_GUESS"}
-    Returns: {"uuid": "...", "gameType": "..."}
+    Expects: {
+        "gameType": "NORMAL" | "MC_GUESS",
+        "customOptions": {
+            "rankFilter": ["Premier", "Governor"]  # Optional
+        }
+    }
+    Returns: {"uuid": "...", "gameType": "...", "isCustom": bool}
     """
     data = request.json or {}
     game_type = data.get('gameType')
+    custom_options = data.get('customOptions')
 
     # Validate game_type
     valid_game_types = ['NORMAL', 'MC_GUESS']
     if game_type not in valid_game_types:
         return jsonify({'error': f'Invalid game type. Must be one of: {", ".join(valid_game_types)}'}), 400
+
+    # Determine if custom game
+    is_custom = False
+    custom_options_json = None
+
+    if custom_options:
+        rank_filter = custom_options.get('rankFilter', [])
+        if rank_filter and len(rank_filter) > 0:
+            is_custom = True
+            custom_options_json = Json(custom_options)
 
     token = request.cookies.get('auth_token')
     user = get_user_from_token(token)
@@ -189,22 +207,30 @@ def start_game():
     user_id = user['id'] if user else None
 
     result = execute_query(
-        "INSERT INTO games (user_id, game_type) VALUES (%s, %s) RETURNING uuid",
-        (user_id, game_type),
+        """INSERT INTO games (user_id, game_type, custom_options, is_custom)
+           VALUES (%s, %s, %s, %s) RETURNING uuid""",
+        (user_id, game_type, custom_options_json, is_custom),
         fetchone=True
     )
 
-    return jsonify({'uuid': str(result['uuid']), 'gameType': game_type})
+    return jsonify({
+        'uuid': str(result['uuid']),
+        'gameType': game_type,
+        'isCustom': is_custom
+    })
 
 
 @game_bp.route("/api/game/<uuid:game_uuid>/round", methods=['POST'])
 def get_round(game_uuid):
     """
     Get current or new round for a game. Idempotent - returns same panorama if already set.
+    Applies rank filtering if custom_options.rankFilter is set.
     Returns: {"panoramaId": 42, "roundNumber": 1, "totalScore": 12345}
     """
     result = execute_query(
-        "SELECT round_number, current_panorama_id, created_at, game_type FROM games WHERE uuid = %s",
+        """SELECT round_number, current_panorama_id, created_at, game_type,
+                  custom_options, is_custom
+           FROM games WHERE uuid = %s""",
         (str(game_uuid),),
         fetchone=True
     )
@@ -217,6 +243,27 @@ def get_round(game_uuid):
     panorama_id = result['current_panorama_id']
     if panorama_id is None:
         panorama_data = get_panorama_data()
+
+        # Apply rank filtering if custom options present
+        custom_options = result.get('custom_options')
+        if custom_options and 'rankFilter' in custom_options:
+            rank_filter = custom_options['rankFilter']
+            if rank_filter and len(rank_filter) > 0:
+                # Filter panoramas by selected ranks
+                filtered_panoramas = {
+                    pid: pano for pid, pano in panorama_data.items()
+                    if pano['rank'] in rank_filter
+                }
+
+                # Validate we have panoramas to select from
+                if not filtered_panoramas:
+                    return jsonify({
+                        'error': 'No panoramas match the selected rank filters'
+                    }), 400
+
+                panorama_data = filtered_panoramas
+
+        # Select random panorama from (possibly filtered) pool
         panorama_id = random.choice(list(panorama_data.keys()))
         execute_query(
             "UPDATE games SET current_panorama_id = %s WHERE uuid = %s",
@@ -347,7 +394,7 @@ def get_results(game_uuid):
     """
     result = execute_query(
         """SELECT g.guess_results, g.round_number, g.created_at, g.completed_at, g.game_type,
-                  u.display_name, u.username, u.profile_picture
+                  g.is_custom, u.display_name, u.username, u.profile_picture
            FROM games g
            LEFT JOIN users u ON g.user_id = u.id
            WHERE g.uuid = %s""",
@@ -369,5 +416,6 @@ def get_results(game_uuid):
         'profilePicture': result['profile_picture'],
         'createdAt': result['created_at'].isoformat(),
         'completedAt': result['completed_at'].isoformat() if result['completed_at'] else None,
-        'gameType': result['game_type']
+        'gameType': result['game_type'],
+        'isCustom': result.get('is_custom', False)
     })

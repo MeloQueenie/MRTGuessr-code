@@ -41,9 +41,14 @@ export enum GameType {
   MC_GUESS = 'MC_GUESS',
 }
 
+export interface CustomGameOptions {
+  rankFilter?: string[];
+}
+
 export interface StartData {
   uuid: string;
   gameType: GameType;
+  isCustom: boolean;
 }
 export interface RoundData {
   panoramaId: number;
@@ -73,6 +78,7 @@ export interface ResultsData {
   username: string | null;
   profilePicture: string | null;
   gameType: GameType;
+  isCustom?: boolean;
 }
 export interface GameStatisticsData {
   totalPanoramas: number;
@@ -149,6 +155,7 @@ export interface UserGame {
   completedAt: string;
   totalScore: number;
   roundsPlayed: number;
+  isCustom: boolean;
 }
 
 export interface UserGamesResponse {
@@ -214,7 +221,10 @@ export async function fetchDynmapNewData(): Promise<DynmapData> {
   return data;
 }
 
-export async function startGame(gameType: 'NORMAL' | 'MC_GUESS'): Promise<StartData> {
+export async function startGame(
+  gameType: 'NORMAL' | 'MC_GUESS',
+  customOptions?: CustomGameOptions
+): Promise<StartData> {
   let res = await fetch(`${API_URL}/game/start`, {
     method: 'POST',
     headers: {
@@ -223,6 +233,7 @@ export async function startGame(gameType: 'NORMAL' | 'MC_GUESS'): Promise<StartD
     credentials: 'include',
     body: JSON.stringify({
       gameType,
+      customOptions,
     }),
   });
   let data = await res.json();

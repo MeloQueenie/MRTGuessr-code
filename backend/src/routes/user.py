@@ -148,21 +148,28 @@ def get_user_games(identifier):
 
     user_id = user_result['id']
 
-    # Get total count and statistics
+    # Get total count and statistics - EXCLUDE CUSTOM GAMES
     count_result = execute_query(
-        "SELECT COUNT(*) as total FROM games WHERE user_id = %s AND completed_at IS NOT NULL",
+        """SELECT COUNT(*) as total
+           FROM games
+           WHERE user_id = %s
+             AND completed_at IS NOT NULL
+             AND is_custom = FALSE
+        """,
         (user_id,),
         fetchone=True
     )
     total = count_result['total']
 
-    # Get overall statistics
+    # Get overall statistics - EXCLUDE CUSTOM GAMES
     stats_result = execute_query(
         """SELECT
                SUM((guess_result->>'score')::int) as total_score,
                COUNT(DISTINCT g.uuid) as games_count
            FROM games g, jsonb_array_elements(g.guess_results) AS guess_result
-           WHERE g.user_id = %s AND g.completed_at IS NOT NULL
+           WHERE g.user_id = %s
+             AND g.completed_at IS NOT NULL
+             AND g.is_custom = FALSE
         """,
         (user_id,),
         fetchone=True
@@ -170,9 +177,9 @@ def get_user_games(identifier):
     total_all_game_score = stats_result['total_score'] or 0
     avg_score = (total_all_game_score // stats_result['games_count']) if stats_result['games_count'] and stats_result['games_count'] > 0 else 0
 
-    # Get games
+    # Get games (includes custom games, but stats above exclude them)
     games_query = """
-        SELECT uuid, created_at, completed_at, guess_results, round_number
+        SELECT uuid, created_at, completed_at, guess_results, round_number, is_custom
         FROM games
         WHERE user_id = %s AND completed_at IS NOT NULL
         ORDER BY completed_at DESC
@@ -189,7 +196,8 @@ def get_user_games(identifier):
             'createdAt': game['created_at'].isoformat(),
             'completedAt': game['completed_at'].isoformat(),
             'totalScore': total_score,
-            'roundsPlayed': len(game['guess_results']) if game['guess_results'] else 0
+            'roundsPlayed': len(game['guess_results']) if game['guess_results'] else 0,
+            'isCustom': game.get('is_custom', False)
         })
 
     return jsonify({
