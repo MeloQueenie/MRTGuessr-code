@@ -71,6 +71,11 @@ services:
       start_period: 40s
     depends_on:
       - backend
+    deploy:
+      mode: replicated
+      endpoint_mode: vip
+      replicas: 2
+
   nginx:
     image: nginx:latest
     ports:
