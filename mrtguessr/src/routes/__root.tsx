@@ -2,7 +2,7 @@ import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { PostHogProvider } from "@posthog/react";
+import { PostHogProvider, PostHogErrorBoundary } from "@posthog/react";
 
 import Header from '../components/Header'
 import { HeaderProvider } from '../contexts/HeaderContext'
@@ -83,29 +83,55 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <PostHogProvider apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY} options={options}>
-          <QueryClientProvider client={queryClient}>
-            
-              <AuthProvider>
-                <HeaderProvider>
-                  <Header />
-                  {children}
-                </HeaderProvider>
-              </AuthProvider>
-            <TanStackDevtools
-              config={{
-                position: 'bottom-right',
-              }}
-              plugins={[
-                {
-                  name: 'Tanstack Router',
-                  render: <TanStackRouterDevtoolsPanel />,
-                },
-              ]}
-            />
-          </QueryClientProvider>
+          <PostHogErrorBoundary fallback={ErrorFallbackComponent}>
+            <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                  <HeaderProvider>
+                    <Header />
+                    {children}
+                  </HeaderProvider>
+                </AuthProvider>
+              <TanStackDevtools
+                config={{
+                  position: 'bottom-right',
+                }}
+                plugins={[
+                  {
+                    name: 'Tanstack Router',
+                    render: <TanStackRouterDevtoolsPanel />,
+                  },
+                ]}
+              />
+            </QueryClientProvider>
+          </PostHogErrorBoundary>
         </PostHogProvider>
         <Scripts />
       </body>
     </html>
+  )
+}
+
+const ErrorFallbackComponent = ({ error, componentStack, exceptionEvent }: {
+  error: unknown;
+  exceptionEvent: unknown;
+  componentStack: string
+}) => {
+  const errorMessage = error instanceof Error ? error.message : String(error)
+  const errorName = error instanceof Error ? error.name : 'Error'
+  const exceptionEventString = typeof exceptionEvent === 'object' ? JSON.stringify(exceptionEvent, null, 2) : String(exceptionEvent)
+
+  return (
+    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }} className='min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white'>
+      <h1 className="text-red-600 text-2xl font-bold">MRTGuessr - Something went wrong!</h1>
+      <p className="mb-4 font-bold">Take a screenshot of this page and report this issue on <a className="underline decoration-dashed" href="https://discord.gg/qXYgrZmswW" target="_blank">Discord</a>.</p>
+      <p><strong>{errorName}:</strong> {errorMessage}</p>
+      <pre style={{ whiteSpace: 'pre-wrap', background: '#1e293b', padding: '1rem', borderRadius: '4px' }}>
+        {componentStack}
+      </pre>
+      <h2>Exception Event</h2>
+      <pre style={{ whiteSpace: 'pre-wrap', background: '#1e293b', padding: '1rem', borderRadius: '4px' }}>
+        {exceptionEventString}
+      </pre>
+    </div>
   )
 }
