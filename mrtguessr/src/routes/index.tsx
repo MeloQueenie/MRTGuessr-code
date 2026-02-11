@@ -15,11 +15,15 @@
   // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { logoUrl, getHealth, startGame, fetchGameStatistics, type CustomGameOptions } from '@/lib/api'
+import { logoUrl, getHealth, startGame, fetchGameStatistics, fetchDynmapNewData, type CustomGameOptions } from '@/lib/api'
 import { ConstructionIcon, Dot, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MultiSelect } from '@/components/ui/multi-select'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { useFeatureFlagEnabled } from '@posthog/react'
 
 export const Route = createFileRoute('/')({component: App })
 
@@ -30,25 +34,85 @@ function App() {
 
   const auth = useAuth();
 
+  // -- Feature Flags --
+  const mcGuessEnabled = useFeatureFlagEnabled('mc-guess-mode');
+
   const [showCustomOptions, setShowCustomOptions] = useState(false);
   const [selectedRanks, setSelectedRanks] = useState<string[]>([]);
+  const [showPlayerModal, setShowPlayerModal] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const [useMcGuessMode, setUseMcGuessMode] = useState(false);
 
   const AVAILABLE_RANKS = [
     'Special', 'Premier', 'Senator', 'Governor',
     'Mayor', 'Councillor', 'Community', 'Unranked'
   ];
 
+  // Load saved preferences from localStorage on mount
+  useEffect(() => {
+    const savedRanks = localStorage.getItem('customGameOptions.selectedRanks');
+    const savedMcGuessMode = localStorage.getItem('customGameOptions.useMcGuessMode');
+    const savedPlayer = localStorage.getItem('customGameOptions.selectedPlayer');
+
+    if (savedRanks) {
+      try {
+        setSelectedRanks(JSON.parse(savedRanks));
+      } catch (e) {
+        console.error('Failed to parse saved ranks', e);
+      }
+    }
+
+    if (savedMcGuessMode) {
+      setUseMcGuessMode(savedMcGuessMode === 'true');
+    }
+
+    if (savedPlayer) {
+      setSelectedPlayer(savedPlayer);
+    }
+  }, []);
+
+  // Save selectedRanks to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('customGameOptions.selectedRanks', JSON.stringify(selectedRanks));
+  }, [selectedRanks]);
+
+  // Save useMcGuessMode to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('customGameOptions.useMcGuessMode', String(useMcGuessMode));
+  }, [useMcGuessMode]);
+
+  // Save selectedPlayer to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedPlayer) {
+      localStorage.setItem('customGameOptions.selectedPlayer', selectedPlayer);
+    } else {
+      localStorage.removeItem('customGameOptions.selectedPlayer');
+    }
+  }, [selectedPlayer]);
+
   const {data: healthData} = useQuery({
     queryKey: ['health'],
     queryFn: getHealth,
     refetchInterval: 10000,
   });
+
+  const { data: dynmapData } = useQuery({
+    queryKey: ['dynmapPlayers'],
+    queryFn: fetchDynmapNewData,
+    enabled: showPlayerModal,
+    refetchInterval: showPlayerModal ? 5000 : false,
+  });
+
   const startGameMutation = useMutation({
     mutationFn: ({ gameType, customOptions }: {
       gameType: 'NORMAL' | 'MC_GUESS',
       customOptions?: CustomGameOptions
     }) => startGame(gameType, customOptions),
     onSuccess: (data) => {
+      if (selectedPlayer) {
+        sessionStorage.setItem('mcGuessPlayer', selectedPlayer);
+      }
+      setShowPlayerModal(false);
       navigate({ to: `/game/${data.uuid}`, viewTransition: true });
     },
   });
@@ -84,10 +148,15 @@ function App() {
               <>
                 <div
                   onClick={() => {
-                    const customOptions = selectedRanks.length > 0
-                      ? { rankFilter: selectedRanks }
-                      : undefined;
-                    startGameMutation.mutate({ gameType: 'NORMAL', customOptions });
+                    if (useMcGuessMode && !selectedPlayer) {
+                      setShowPlayerModal(true);
+                    } else {
+                      const customOptions = selectedRanks.length > 0
+                        ? { rankFilter: selectedRanks }
+                        : undefined;
+                      const gameType = useMcGuessMode ? 'MC_GUESS' : 'NORMAL';
+                      startGameMutation.mutate({ gameType, customOptions });
+                    }
                   }}
                   className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50 select-none cursor-pointer"
                 >
@@ -125,13 +194,44 @@ function App() {
                           placeholder="Select ranks..."
                         />
                       </div>
-                      <hr className="border-slate-700 mb-3" />
-
                       {selectedRanks.length > 0 && (
                         <div className="text-xs text-cyan-400">
                           {selectedRanks.length} rank{selectedRanks.length !== 1 ? 's' : ''} selected
                         </div>
                       )}
+
+                      <hr className="border-slate-700 my-3" />
+                      {mcGuessEnabled &&
+                        (<div>
+                          <label className="text-sm text-white font-semibold block mb-2">
+                            Get to X Mode
+                          </label>
+                          <p className="text-xs text-gray-400 mb-3">
+                            Track your real-time position as you navigate to the location in-game.
+                          </p>
+                          <div className="flex items-center justify-center gap-3">
+                            <Switch
+                              checked={useMcGuessMode}
+                              onCheckedChange={(checked) => {
+                                setUseMcGuessMode(checked);
+                                if (checked) {
+                                  setShowPlayerModal(true);
+                                } else {
+                                  setSelectedPlayer(null);
+                                }
+                              }}
+                            />
+                            <span className="text-sm text-gray-300">
+                              {useMcGuessMode ? 'Enabled' : 'Disabled'}
+                            </span>
+                          </div>
+                          {useMcGuessMode && selectedPlayer && (
+                            <div className="text-xs text-cyan-400 mt-2">
+                              Selected player: {selectedPlayer}
+                            </div>
+                          )}
+                        </div>)
+                      }
                     </div>
                   )}
                 </div>
@@ -180,6 +280,68 @@ function App() {
       <div className="py-6 text-center text-sm text-gray-500" suppressHydrationWarning>
         © {new Date().getFullYear()} Seshpenguin & MeloQueen.
       </div>
+
+      {/* Player Selection Modal */}
+      <Dialog open={showPlayerModal} onOpenChange={(open) => {
+        setShowPlayerModal(open);
+        if (!open && !selectedPlayer) {
+          setUseMcGuessMode(false);
+        }
+      }}>
+        <DialogContent className="bg-slate-900 border-slate-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Select Your Minecraft Player</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Choose your username from currently online players. Your real-time position will be tracked during the game.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto space-y-2">
+            {dynmapData?.players && dynmapData.players.length > 0 ? (
+              dynmapData.players.map((player) => (
+                <Button
+                  key={player.account}
+                  variant={selectedPlayer === player.name ? "default" : "outline"}
+                  className={`w-full justify-start ${
+                    selectedPlayer === player.name
+                      ? 'bg-cyan-500 hover:bg-cyan-600 text-white'
+                      : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600'
+                  }`}
+                  onClick={() => setSelectedPlayer(player.name)}
+                >
+                  {player.name}
+                </Button>
+              ))
+            ) : (
+              <p className="text-gray-400 text-center py-4">
+                {dynmapData ? 'No players currently online' : 'Loading players...'}
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPlayerModal(false);
+                if (!selectedPlayer) {
+                  setUseMcGuessMode(false);
+                }
+              }}
+              className="bg-slate-800 hover:bg-slate-700 text-white border-slate-600"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={!selectedPlayer}
+              onClick={() => {
+                setShowPlayerModal(false);
+              }}
+              className="bg-cyan-500 hover:bg-cyan-600 text-white"
+            >
+              OK
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { PostHogProvider } from "@posthog/react";
 
 import Header from '../components/Header'
 import { HeaderProvider } from '../contexts/HeaderContext'
@@ -9,6 +10,11 @@ import { AuthProvider } from '../contexts/AuthContext'
 
 import '../styles.css'
 import { logoUrl } from '@/lib/api'
+
+const options = {
+  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+  defaults: '2026-01-30',
+} as const
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,25 +82,28 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <HeaderProvider>
-              <Header />
-              {children}
-            </HeaderProvider>
-          </AuthProvider>
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-            ]}
-          />
-        </QueryClientProvider>
+        <PostHogProvider apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY} options={options}>
+          <QueryClientProvider client={queryClient}>
+            
+              <AuthProvider>
+                <HeaderProvider>
+                  <Header />
+                  {children}
+                </HeaderProvider>
+              </AuthProvider>
+            <TanStackDevtools
+              config={{
+                position: 'bottom-right',
+              }}
+              plugins={[
+                {
+                  name: 'Tanstack Router',
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+              ]}
+            />
+          </QueryClientProvider>
+        </PostHogProvider>
         <Scripts />
       </body>
     </html>

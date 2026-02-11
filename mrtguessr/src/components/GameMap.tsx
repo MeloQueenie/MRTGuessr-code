@@ -52,6 +52,18 @@ function AutoFitBounds({ markerPosition, guessResult }: { markerPosition: [numbe
   return null
 }
 
+function AutoCenterOnPlayer({ markerPosition, isMcGuessMode }: { markerPosition: [number, number] | null, isMcGuessMode: boolean }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (isMcGuessMode && markerPosition) {
+      map.setView(markerPosition, map.getZoom(), { animate: true, duration: 0.5 })
+    }
+  }, [markerPosition, isMcGuessMode, map])
+
+  return null
+}
+
 function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
   useMapEvents({
     click(e) {
@@ -67,15 +79,17 @@ interface GameMapProps {
   isEndRoundView: boolean,
   markerPosition: [number, number] | null,
   guessResult?: GuessResult | null,
-  onMapClick: (lat: number, lng: number) => void
+  onMapClick: (lat: number, lng: number) => void,
+  isMcGuessMode?: boolean
 }
 
-export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResult, onMapClick }: GameMapProps) {
+export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResult, onMapClick, isMcGuessMode = false }: GameMapProps) {
   return (
     <MapContainer crs={CRS.Simple} center={[0, 0]} zoom={4} style={{ height: '100%', width: '100%', cursor: 'pointer' } }>
       <MapResizeHandler isExpanded={isExpanded} isEndRoundView={isEndRoundView} />
       <MapClickHandler onMapClick={onMapClick} />
       {guessResult && markerPosition && <AutoFitBounds markerPosition={markerPosition} guessResult={guessResult} />}
+      {isMcGuessMode && !isEndRoundView && <AutoCenterOnPlayer markerPosition={markerPosition} isMcGuessMode={isMcGuessMode} />}
       <TileLayer
         attribution='&copy; MinecartRapidTransit'
         url={API_URL + "/tiles/{z}/{x}/{y}.png"}

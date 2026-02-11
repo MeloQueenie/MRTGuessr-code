@@ -57,6 +57,8 @@ services:
       args:
         GIT_HASH: ${GIT_HASH}
         VITE_PUBLIC_URL: ${VITE_PUBLIC_URL}
+        VITE_PUBLIC_POSTHOG_KEY: ${VITE_PUBLIC_POSTHOG_KEY}
+        VITE_PUBLIC_POSTHOG_HOST: ${VITE_PUBLIC_POSTHOG_HOST}
     expose:
       - "3000"
     environment:

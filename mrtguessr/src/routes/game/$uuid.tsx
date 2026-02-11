@@ -6,11 +6,11 @@ import Lottie, { LottieRefCurrentProps } from 'lottie-react'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Dot } from 'lucide-react'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { fetchRoundData, postGuess, GuessResult, logoUrl, API_URL } from '@/lib/api'
+import { fetchRoundData, postGuess, GuessResult, logoUrl, API_URL, fetchDynmapNewData, GameType } from '@/lib/api'
 import { useHeader } from '@/contexts/HeaderContext'
 import { GameMap } from '@/components/GameMap'
 import GuessButton from '@/components/GuessButton'
-import { leafletToMinecraft } from '@/lib/coordinates'
+import { leafletToMinecraft, minecraftToLeaflet } from '@/lib/coordinates'
 import confettiAnimation from '@/components/Confetti.json'
 
 import '@photo-sphere-viewer/compass-plugin/index.css';
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/game/$uuid')({
   component: RouteComponent,
 })
 
-function HeaderContent({ roundNumber, timeLeft, totalScore }: { roundNumber: number; timeLeft: number; totalScore: number }) {
+function HeaderContent({ roundNumber, timeLeft, totalScore, mcGuessPlayer }: { roundNumber: number; timeLeft: number; totalScore: number; mcGuessPlayer?: string | null }) {
   return (
     <>
     <div className="flex items-center gap-4">
@@ -31,6 +31,14 @@ function HeaderContent({ roundNumber, timeLeft, totalScore }: { roundNumber: num
       <div>
         Total Score: {totalScore.toLocaleString()}
       </div>
+      {mcGuessPlayer && (
+        <>
+          <Dot />
+          <div className="text-cyan-400">
+            Tracking: {mcGuessPlayer}
+          </div>
+        </>
+      )}
       <Dot />
       <div className="text-lg font-mono">
         {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
@@ -51,6 +59,7 @@ function RouteComponent() {
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const confettiRef = useRef<LottieRefCurrentProps>(null);
   const navigate = useNavigate({from: "/game/$uuid"});
+  const [mcGuessPlayer, setMcGuessPlayer] = useState<string | null>(null);
 
   const { data: roundData, refetch: refetchRound, isError } = useQuery({
     queryKey: ['roundData', uuid],
@@ -58,6 +67,14 @@ function RouteComponent() {
   })
   const roundNumber = roundData?.roundNumber || 1;
   const totalScore = roundData?.totalScore || 0;
+  const isMcGuessMode = roundData?.gameType === GameType.MC_GUESS;
+
+  const { data: dynmapData } = useQuery({
+    queryKey: ['dynmapPlayers'],
+    queryFn: fetchDynmapNewData,
+    enabled: isMcGuessMode && !isEndRoundView,
+    refetchInterval: isMcGuessMode && !isEndRoundView ? 1000 : false,
+  });
 
   const guessMutation = useMutation({
     mutationFn: ({ guessX, guessZ }: { guessX: number; guessZ: number }) =>
@@ -81,6 +98,23 @@ function RouteComponent() {
     }
   }, [roundData])
 
+  useEffect(() => {
+    const savedPlayer = sessionStorage.getItem('mcGuessPlayer');
+    if (savedPlayer) {
+      setMcGuessPlayer(savedPlayer);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isMcGuessMode && mcGuessPlayer && dynmapData && !isEndRoundView) {
+      const player = dynmapData.players.find(p => p.name === mcGuessPlayer);
+      if (player) {
+        const leafletCoords = minecraftToLeaflet(player.x, player.z);
+        setMarkerPosition([leafletCoords.lat, leafletCoords.lng]);
+      }
+    }
+  }, [isMcGuessMode, mcGuessPlayer, dynmapData, isEndRoundView]);
+
   async function resetAll() {
     setTimeLeft(0);
     setIsMapExpanded(false);
@@ -89,6 +123,7 @@ function RouteComponent() {
     setIsEndRoundView(false);
     setShowLoadingScreen(true);
     confettiRef.current?.stop();
+    sessionStorage.removeItem('mcGuessPlayer');
     await refetchRound();
   }
 
@@ -112,10 +147,10 @@ function RouteComponent() {
 
   useEffect(() => {
     setCenterContent(
-      <HeaderContent roundNumber={roundNumber} timeLeft={timeLeft} totalScore={totalScore} />
+      <HeaderContent roundNumber={roundNumber} timeLeft={timeLeft} totalScore={totalScore} mcGuessPlayer={isMcGuessMode ? mcGuessPlayer : null} />
     );
     return () => setCenterContent(null);
-  }, [roundNumber, timeLeft, totalScore, setCenterContent]);
+  }, [roundNumber, timeLeft, totalScore, isMcGuessMode, mcGuessPlayer, setCenterContent]);
 
   useEffect(() => {
     if (roundNumber > 5) {
@@ -170,7 +205,11 @@ function RouteComponent() {
             isEndRoundView={isEndRoundView}
             markerPosition={markerPosition}
             guessResult={guessResult}
-            onMapClick={(lat, lng) => isEndRoundView ? null : setMarkerPosition([lat, lng])}
+            isMcGuessMode={isMcGuessMode}
+            onMapClick={(lat, lng) => {
+              if (isEndRoundView || isMcGuessMode) return;
+              setMarkerPosition([lat, lng]);
+            }}
           />
         </ClientOnly>
         <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] z-[1000] scale-75 md:scale-100 transition-all duration-300 ease-in-out ${!isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
