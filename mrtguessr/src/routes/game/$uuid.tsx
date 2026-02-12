@@ -206,6 +206,7 @@ function RouteComponent() {
             markerPosition={markerPosition}
             guessResult={guessResult}
             isMcGuessMode={isMcGuessMode}
+            mcGuessPlayer={mcGuessPlayer}
             onMapClick={(lat, lng) => {
               if (isEndRoundView || isMcGuessMode) return;
               setMarkerPosition([lat, lng]);

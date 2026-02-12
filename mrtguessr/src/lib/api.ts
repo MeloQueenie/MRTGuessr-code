@@ -156,6 +156,7 @@ export interface UserGame {
   totalScore: number;
   roundsPlayed: number;
   isCustom: boolean;
+  gameType?: GameType;
 }
 
 export interface UserGamesResponse {
@@ -322,4 +323,8 @@ export async function fetchUserGames(identifier: string, page: number = 1, limit
   }
   let data = await res.json();
   return data;
+}
+
+export function getPlayerFaceUrl(username: string): string {
+  return `${API_URL}/service/player_face/${encodeURIComponent(username)}`;
 }

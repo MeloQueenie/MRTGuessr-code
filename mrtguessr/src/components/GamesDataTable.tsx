@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { UserGame } from '@/lib/api'
+import { UserGame, GameType } from '@/lib/api'
 
 interface GamesDataTableProps {
   data: UserGame[]
@@ -61,16 +61,30 @@ export function GamesDataTable({
       cell: ({ row }) => {
         const score = row.getValue('totalScore') as number
         const isCustom = row.original.isCustom
+        const gameType = row.original.gameType
+
+        // Determine badge based on game type
+        let badge = null
+        if (gameType === GameType.MC_GUESS) {
+          badge = (
+            <span className="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded border border-cyan-500/50">
+              Get to X
+            </span>
+          )
+        } else if (isCustom) {
+          badge = (
+            <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded border border-orange-500/50">
+              Custom
+            </span>
+          )
+        }
+
         return (
           <div className="flex items-center gap-2">
             <div className="font-bold text-emerald-400">
               {score.toLocaleString()}
             </div>
-            {isCustom && (
-              <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded border border-orange-500/50">
-                Custom
-              </span>
-            )}
+            {badge}
           </div>
         )
       },

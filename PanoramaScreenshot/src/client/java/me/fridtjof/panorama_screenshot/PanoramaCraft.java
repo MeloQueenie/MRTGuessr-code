@@ -32,6 +32,7 @@ import java.util.UUID;
 
 public class PanoramaCraft implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("panorama_craft");
+	private static final Object ID_LOCK = new Object(); // Synchronization lock for ID generation
 
 	private final File GAME_DIR = new File(FabricLoader.getInstance().getGameDir().toString());
 	private final File SCREENSHOT_DIR = new File(FabricLoader.getInstance().getGameDir().toString() + "/screenshots/");
@@ -246,49 +247,78 @@ public class PanoramaCraft implements ClientModInitializer {
 		HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
 
 		if (response.statusCode() == 200) {
-			// Read CSV to get the next panorama ID
-			Path csvPath = Paths.get(config.assetRepoDir, "mcPhotosphere", "pan_locations.csv");
-			int nextId = 1; // Default if CSV is empty or doesn't exist
+			// Synchronize this entire section to prevent race conditions when multiple panoramas are taken simultaneously
+			synchronized (ID_LOCK) {
+				// Read CSV to get the next panorama ID
+				Path csvPath = Paths.get(config.assetRepoDir, "mcPhotosphere", "pan_locations.csv");
+				Path panDir = Paths.get(config.assetRepoDir, "mcPhotosphere", "pan");
+				int nextId = 1; // Default if CSV is empty or doesn't exist
 
-			if (Files.exists(csvPath)) {
-				List<String> lines = Files.readAllLines(csvPath);
-				// Skip header and find the last line
-				if (lines.size() > 1) {
-					String lastLine = lines.get(lines.size() - 1);
-					String[] parts = lastLine.split(",");
-					if (parts.length > 0 && parts[0].startsWith("panorama_")) {
-						try {
-							int lastId = Integer.parseInt(parts[0].substring("panorama_".length()));
-							nextId = lastId + 1;
-						} catch (NumberFormatException e) {
-							LOGGER.error("Failed to parse panorama ID from: {}", parts[0]);
+				if (Files.exists(csvPath)) {
+					List<String> lines = Files.readAllLines(csvPath);
+					// Skip header and find the last line
+					if (lines.size() > 1) {
+						String lastLine = lines.get(lines.size() - 1);
+						String[] parts = lastLine.split(",");
+						if (parts.length > 0 && parts[0].startsWith("panorama_")) {
+							try {
+								int lastId = Integer.parseInt(parts[0].substring("panorama_".length()));
+								nextId = lastId + 1;
+							} catch (NumberFormatException e) {
+								LOGGER.error("Failed to parse panorama ID from: {}", parts[0]);
+							}
 						}
 					}
 				}
+
+				// Safety check: scan existing files to prevent overwrites
+				// This protects against CSV corruption or read failures
+				Files.createDirectories(panDir);
+				if (Files.exists(panDir)) {
+					try (var stream = Files.list(panDir)) {
+						int maxFileId = stream
+							.filter(p -> p.getFileName().toString().startsWith("panorama_") && p.getFileName().toString().endsWith(".png"))
+							.mapToInt(p -> {
+								try {
+									String filename = p.getFileName().toString();
+									String idStr = filename.substring("panorama_".length(), filename.length() - ".png".length());
+									return Integer.parseInt(idStr);
+								} catch (NumberFormatException | StringIndexOutOfBoundsException e) {
+									return 0;
+								}
+							})
+							.max()
+							.orElse(0);
+
+						// Use the higher of CSV-based ID or file-based ID to prevent overwrites
+						if (maxFileId >= nextId) {
+							LOGGER.warn("File-based ID ({}) is higher than CSV-based ID ({}), using file-based + 1 to prevent overwrite", maxFileId, nextId);
+							nextId = maxFileId + 1;
+						}
+					}
+				}
+
+				// Save the panorama image with incremented ID
+				String outputFileName = "panorama_" + nextId + ".png";
+				Path outputPath = panDir.resolve(outputFileName);
+				Files.write(outputPath, response.body(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+
+				// Append to CSV with block coordinates (truncate the 0.5 center offset)
+				int flooredX = (int) playerX;
+				int flooredZ = (int) playerZ;
+
+				// Find nearest town
+				TownInfo nearestTown = findNearestTown(flooredX, flooredZ);
+
+				String csvLine = String.format("%s,%d,%d,%s,%s,\n", "panorama_" + nextId, flooredX, flooredZ, nearestTown.name, nearestTown.rank);
+				Files.writeString(csvPath, csvLine, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
+
+				LOGGER.info("Panorama saved: {} at X={}, Z={} (nearest: {} - {})", outputFileName, flooredX, flooredZ, nearestTown.name, nearestTown.rank);
+				client.execute(() -> {
+					client.player.sendMessage(Text.literal("Panorama saved: " + outputFileName + " at X=" + flooredX + ", Z=" + flooredZ + " (nearest town: " + nearestTown.name + " - " + nearestTown.rank + ")").formatted(Formatting.GREEN), false);
+				});
+				return outputFileName;
 			}
-
-			// Save the panorama image with incremented ID
-			String outputFileName = "panorama_" + nextId + ".png";
-			Path panDir = Paths.get(config.assetRepoDir, "mcPhotosphere", "pan");
-			Files.createDirectories(panDir);
-			Path outputPath = panDir.resolve(outputFileName);
-			Files.write(outputPath, response.body(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-
-			// Append to CSV with block coordinates (truncate the 0.5 center offset)
-			int flooredX = (int) playerX;
-			int flooredZ = (int) playerZ;
-
-			// Find nearest town
-			TownInfo nearestTown = findNearestTown(flooredX, flooredZ);
-
-			String csvLine = String.format("%s,%d,%d,%s,%s,\n", "panorama_" + nextId, flooredX, flooredZ, nearestTown.name, nearestTown.rank);
-			Files.writeString(csvPath, csvLine, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
-
-			LOGGER.info("Panorama saved: {} at X={}, Z={} (nearest: {} - {})", outputFileName, flooredX, flooredZ, nearestTown.name, nearestTown.rank);
-			client.execute(() -> {
-				client.player.sendMessage(Text.literal("Panorama saved: " + outputFileName + " at X=" + flooredX + ", Z=" + flooredZ + " (nearest town: " + nearestTown.name + " - " + nearestTown.rank + ")").formatted(Formatting.GREEN), false);
-			});
-			return outputFileName;
 		} else {
 			LOGGER.error("API returned error: {} - {}", response.statusCode(), new String(response.body(), StandardCharsets.UTF_8));
 			return null;

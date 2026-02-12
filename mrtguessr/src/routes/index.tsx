@@ -15,7 +15,7 @@
   // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { logoUrl, getHealth, startGame, fetchGameStatistics, fetchDynmapNewData, type CustomGameOptions } from '@/lib/api'
+import { logoUrl, getHealth, startGame, fetchGameStatistics, fetchDynmapNewData, getPlayerFaceUrl, type CustomGameOptions } from '@/lib/api'
 import { ConstructionIcon, Dot, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState, useEffect } from 'react'
@@ -89,6 +89,17 @@ function App() {
       localStorage.removeItem('customGameOptions.selectedPlayer');
     }
   }, [selectedPlayer]);
+
+  // Reset all custom game options to defaults
+  const resetCustomOptions = () => {
+    setSelectedRanks([]);
+    setUseMcGuessMode(false);
+    setSelectedPlayer(null);
+    // Clear from localStorage
+    localStorage.removeItem('customGameOptions.selectedRanks');
+    localStorage.removeItem('customGameOptions.useMcGuessMode');
+    localStorage.removeItem('customGameOptions.selectedPlayer');
+  };
 
   const {data: healthData} = useQuery({
     queryKey: ['health'],
@@ -213,10 +224,14 @@ function App() {
                             <Switch
                               checked={useMcGuessMode}
                               onCheckedChange={(checked) => {
-                                setUseMcGuessMode(checked);
                                 if (checked) {
+                                  // When enabling, clear any previous player selection and show dialog
+                                  setSelectedPlayer(null);
+                                  setUseMcGuessMode(true);
                                   setShowPlayerModal(true);
                                 } else {
+                                  // When disabling, clear everything
+                                  setUseMcGuessMode(false);
                                   setSelectedPlayer(null);
                                 }
                               }}
@@ -232,12 +247,28 @@ function App() {
                           )}
                         </div>)
                       }
+
+                      {/* Reset Button */}
+                      {(selectedRanks.length > 0 || useMcGuessMode || selectedPlayer) && (
+                        <>
+                          <hr className="border-slate-700 my-3" />
+                          <div className="flex justify-center">
+                            <Button
+                              variant="outline"
+                              onClick={resetCustomOptions}
+                              className="text-sm bg-slate-800 hover:bg-slate-700 text-gray-300 border-slate-600"
+                            >
+                              Reset All Options
+                            </Button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
                 
-                <p className="text-sm text-gray-500 mt-4" suppressHydrationWarning>
-                  <hr className="border-slate-700 my-4" />
+                <hr className="border-slate-700 my-4" />
+                <p className="text-sm text-gray-500" suppressHydrationWarning>
                   {gameStatistics ? (
                     <>
                       <span>{gameStatistics.totalPanoramas.toLocaleString()} panoramas</span>
@@ -301,13 +332,19 @@ function App() {
                 <Button
                   key={player.account}
                   variant={selectedPlayer === player.name ? "default" : "outline"}
-                  className={`w-full justify-start ${
+                  className={`w-full justify-start gap-3 ${
                     selectedPlayer === player.name
                       ? 'bg-cyan-500 hover:bg-cyan-600 text-white'
                       : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600'
                   }`}
                   onClick={() => setSelectedPlayer(player.name)}
                 >
+                  <img
+                    src={getPlayerFaceUrl(player.name)}
+                    alt={`${player.name}'s face`}
+                    className="w-8 h-8 pixelated"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
                   {player.name}
                 </Button>
               ))

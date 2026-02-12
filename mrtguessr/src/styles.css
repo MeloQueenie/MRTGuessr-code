@@ -137,3 +137,17 @@ code {
     @apply bg-background text-foreground;
   }
 }
+
+/* Pixelated rendering for Minecraft skins */
+.pixelated,
+.pixelated-icon {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+img.pixelated-icon {
+  border: 2px solid #333 !important;
+  border-radius: 2px !important;
+  box-sizing: content-box !important;
+}

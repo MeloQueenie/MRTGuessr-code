@@ -1,8 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { CircleMarker, MapContainer, Marker, Polyline, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { CRS, Icon } from 'leaflet'
 import { leafletToMinecraft, formatMinecraftCoords, minecraftToLeaflet } from '@/lib/coordinates'
-import { API_URL, GuessResult, pinpointUrl } from '@/lib/api'
+import { API_URL, GuessResult, pinpointUrl, getPlayerFaceUrl } from '@/lib/api'
 
 const actualIconMarker = new Icon({
   iconUrl: pinpointUrl.Actual,
@@ -80,10 +80,24 @@ interface GameMapProps {
   markerPosition: [number, number] | null,
   guessResult?: GuessResult | null,
   onMapClick: (lat: number, lng: number) => void,
-  isMcGuessMode?: boolean
+  isMcGuessMode?: boolean,
+  mcGuessPlayer?: string | null
 }
 
-export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResult, onMapClick, isMcGuessMode = false }: GameMapProps) {
+export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResult, onMapClick, isMcGuessMode = false, mcGuessPlayer = null }: GameMapProps) {
+  // Create a dynamic icon for the player's face in MC guess mode
+  const playerFaceIcon = useMemo(() => {
+    if (isMcGuessMode && mcGuessPlayer) {
+      return new Icon({
+        iconUrl: getPlayerFaceUrl(mcGuessPlayer),
+        iconSize: [26, 26],
+        iconAnchor: [13, 13],
+        popupAnchor: [0, -13],
+        className: 'pixelated-icon',
+      });
+    }
+    return null;
+  }, [isMcGuessMode, mcGuessPlayer]);
   return (
     <MapContainer crs={CRS.Simple} center={[0, 0]} zoom={4} style={{ height: '100%', width: '100%', cursor: 'pointer' } }>
       <MapResizeHandler isExpanded={isExpanded} isEndRoundView={isEndRoundView} />
@@ -108,10 +122,14 @@ export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResul
       </CircleMarker>
       {markerPosition && (() => {
         const mcCoords = leafletToMinecraft(markerPosition[0], markerPosition[1])
+        const markerIcon = (isMcGuessMode && playerFaceIcon) ? playerFaceIcon : guessIconMarker;
+        const popupText = isMcGuessMode && mcGuessPlayer
+          ? `${mcGuessPlayer}: ${formatMinecraftCoords(mcCoords.x, mcCoords.z)}`
+          : `Your guess: ${formatMinecraftCoords(mcCoords.x, mcCoords.z)}`;
         return (
-          <Marker position={markerPosition} icon={guessIconMarker}>
+          <Marker position={markerPosition} icon={markerIcon}>
             <Popup>
-              Your guess: {formatMinecraftCoords(mcCoords.x, mcCoords.z)}
+              {popupText}
             </Popup>
           </Marker>
         )

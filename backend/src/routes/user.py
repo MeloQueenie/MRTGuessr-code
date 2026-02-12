@@ -179,7 +179,7 @@ def get_user_games(identifier):
 
     # Get games (includes custom games, but stats above exclude them)
     games_query = """
-        SELECT uuid, created_at, completed_at, guess_results, round_number, is_custom
+        SELECT uuid, created_at, completed_at, guess_results, round_number, is_custom, game_type
         FROM games
         WHERE user_id = %s AND completed_at IS NOT NULL
         ORDER BY completed_at DESC
@@ -197,7 +197,8 @@ def get_user_games(identifier):
             'completedAt': game['completed_at'].isoformat(),
             'totalScore': total_score,
             'roundsPlayed': len(game['guess_results']) if game['guess_results'] else 0,
-            'isCustom': game.get('is_custom', False)
+            'isCustom': game.get('is_custom', False),
+            'gameType': game.get('game_type', 'NORMAL')
         })
 
     return jsonify({

@@ -66,7 +66,14 @@ def init_db():
     # Add game_type column
     cur.execute("""
         ALTER TABLE games
-        ADD COLUMN IF NOT EXISTS game_type VARCHAR(50);
+        ADD COLUMN IF NOT EXISTS game_type VARCHAR(50) DEFAULT 'NORMAL';
+    """)
+
+    # Backfill NULL game_type values with 'NORMAL'
+    cur.execute("""
+        UPDATE games
+        SET game_type = 'NORMAL'
+        WHERE game_type IS NULL;
     """)
 
     # Add custom_options JSONB column to store filter settings

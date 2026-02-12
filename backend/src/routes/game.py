@@ -28,7 +28,7 @@ def post_discord_webhook(message: str):
 def send_game_results_discord(game_data):
     """
     Send game results to Discord webhook with an embed.
-    game_data should contain: username, display_name, profile_picture, guess_results, total_score
+    game_data should contain: username, display_name, profile_picture, guess_results, total_score, game_type
     """
     if not DISCORD_WEBHOOK_URL:
         return
@@ -53,10 +53,23 @@ def send_game_results_discord(game_data):
     natural_time = f"{minutes}m {secs}s" if minutes else f"{secs}s"
 
     is_custom = game_data.get('is_custom', False)
-    title = "MRTGuessr Custom Score Card" if is_custom else "MRTGuessr Score Card"
-    description = f"Total score of **{total_score:,}** points in {natural_time}!"
-    if is_custom:
+    game_type = game_data.get('game_type', 'NORMAL')
+
+    # Determine title and description based on game type
+    if game_type == 'MC_GUESS':
+        title = "MRTGuessr Get to X Mode Score Card"
+        description = f"Total score of **{total_score:,}** points in {natural_time}!"
+        description += "\n*Get to X Mode*"
+        color = 0x06B6D4  # Cyan color for MC_GUESS
+    elif is_custom:
+        title = "MRTGuessr Custom Score Card"
+        description = f"Total score of **{total_score:,}** points in {natural_time}!"
         description += "\n*Custom game*"
+        color = 0xF97316  # Orange for custom
+    else:
+        title = "MRTGuessr Score Card"
+        description = f"Total score of **{total_score:,}** points in {natural_time}!"
+        color = 0x34D399  # Green for normal
 
     embed = {
         "author": {
@@ -66,7 +79,7 @@ def send_game_results_discord(game_data):
         "title": title,
         "url": f"https://mrtguessr.seshan.xyz/game/results/{game_data.get('game_uuid')}",
         "description": description,
-        "color": 0xF97316 if is_custom else 0x34D399,  # Orange for custom, green for normal
+        "color": color,
         "fields": fields,
         "footer": {
             "text": "MRTGuessr"
@@ -197,7 +210,8 @@ def start_game():
         return jsonify({'error': f'Invalid game type. Must be one of: {", ".join(valid_game_types)}'}), 400
 
     # Determine if custom game
-    is_custom = False
+    # MC_GUESS games are always considered custom (don't count toward leaderboard)
+    is_custom = game_type == 'MC_GUESS'
     custom_options_json = None
 
     if custom_options:
@@ -281,7 +295,7 @@ def get_round(game_uuid):
         'roundNumber': result['round_number'],
         'totalScore': total_score_result,
         'createdAt': result['created_at'].isoformat(),
-        'gameType': result['game_type']
+        'gameType': result.get('game_type', 'NORMAL')
     })
 
 
@@ -345,7 +359,7 @@ def submit_guess(game_uuid):
 
         # Fetch complete game data for Discord webhook
         game_results = execute_query(
-            """SELECT g.guess_results, g.completed_at, g.user_id, g.is_custom,
+            """SELECT g.guess_results, g.completed_at, g.user_id, g.is_custom, g.game_type,
                       u.display_name, u.username, u.profile_picture
                FROM games g
                LEFT JOIN users u ON g.user_id = u.id
@@ -373,7 +387,8 @@ def submit_guess(game_uuid):
                 'total_score': total_score,
                 'completed_at': game_results['completed_at'].isoformat() if game_results['completed_at'] else None,
                 'time_taken': time_taken['time_taken'] if time_taken else None,
-                'is_custom': game_results.get('is_custom', False)
+                'is_custom': game_results.get('is_custom', False),
+                'game_type': game_results.get('game_type', 'NORMAL')
             })
 
     return jsonify(guess_result)
@@ -423,6 +438,6 @@ def get_results(game_uuid):
         'profilePicture': result['profile_picture'],
         'createdAt': result['created_at'].isoformat(),
         'completedAt': result['completed_at'].isoformat() if result['completed_at'] else None,
-        'gameType': result['game_type'],
+        'gameType': result.get('game_type', 'NORMAL'),
         'isCustom': result.get('is_custom', False)
     })

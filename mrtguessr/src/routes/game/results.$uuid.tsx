@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { ClientOnly } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { fetchResults, GuessResult, logoUrl, PUBLIC_URL } from '@/lib/api'
+import { fetchResults, GuessResult, logoUrl, PUBLIC_URL, GameType } from '@/lib/api'
 import { GameMap } from '@/components/GameMap'
 import { minecraftToLeaflet } from '@/lib/coordinates'
 import { Button } from '@/components/ui/button'
@@ -140,14 +140,23 @@ function RouteComponent() {
             </div>
           )}
 
-          {/* Custom Game Indicator */}
+          {/* Custom Game / Get to X Mode Indicator */}
           {resultData?.isCustom && (
-            <div className="bg-orange-500/20 border border-orange-500 rounded-lg p-4 text-center mb-4 max-w-2xl mx-auto">
-              <p className="font-semibold">Custom Game</p>
-              <p className="text-sm mt-1 text-gray-300">
-                This game used custom options and doesn't count toward leaderboards
-              </p>
-            </div>
+            resultData.gameType === GameType.MC_GUESS ? (
+              <div className="bg-cyan-500/20 border border-cyan-500 rounded-lg p-4 text-center mb-4 max-w-2xl mx-auto">
+                <p className="font-semibold">Get to X Mode</p>
+                <p className="text-sm mt-1 text-gray-300">
+                  This game tracked your real-time position and doesn't count toward leaderboards
+                </p>
+              </div>
+            ) : (
+              <div className="bg-orange-500/20 border border-orange-500 rounded-lg p-4 text-center mb-4 max-w-2xl mx-auto">
+                <p className="font-semibold">Custom Game</p>
+                <p className="text-sm mt-1 text-gray-300">
+                  This game used custom options and doesn't count toward leaderboards
+                </p>
+              </div>
+            )
           )}
 
           <div className="flex flex-col items-center gap-2 text-xl text-slate-300">
