@@ -74,10 +74,10 @@ def send_game_results_discord(game_data):
     embed = {
         "author": {
             "name": game_data.get('display_name') or "Anonymous",
-            "icon_url": game_data.get('profile_picture') or "https://mrtguessr.seshan.xyz/logo192.png"
+            "icon_url": game_data.get('profile_picture') or "https://mrtguessr.com/logo192.png"
         },
         "title": title,
-        "url": f"https://mrtguessr.seshan.xyz/game/results/{game_data.get('game_uuid')}",
+        "url": f"https://mrtguessr.com/game/results/{game_data.get('game_uuid')}",
         "description": description,
         "color": color,
         "fields": fields,

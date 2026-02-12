@@ -1,5 +1,5 @@
 # MRTGusser
-A game by Seshpenguin and MeloQueen
+A game by Seshpenguin and MeloQueen. Try it out at [https://mrtguessr.com](https://mrtguessr.com)!
 
 Backend is in the `backend/` folder. Frontend is in the `mrtguessr/` folder.
 
