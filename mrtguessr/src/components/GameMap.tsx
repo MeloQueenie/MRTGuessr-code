@@ -99,7 +99,7 @@ export function GameMap({ isExpanded, isEndRoundView, markerPosition, guessResul
     return null;
   }, [isMcGuessMode, mcGuessPlayer]);
   return (
-    <MapContainer crs={CRS.Simple} center={[0, 0]} zoom={4} style={{ height: '100%', width: '100%', cursor: 'pointer' } }>
+    <MapContainer crs={CRS.Simple} center={[0, 0]} zoom={0} style={{ height: '100%', width: '100%', cursor: 'pointer' } }>
       <MapResizeHandler isExpanded={isExpanded} isEndRoundView={isEndRoundView} />
       <MapClickHandler onMapClick={onMapClick} />
       {guessResult && markerPosition && <AutoFitBounds markerPosition={markerPosition} guessResult={guessResult} />}

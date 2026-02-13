@@ -54,20 +54,35 @@ function App() {
     const savedMcGuessMode = localStorage.getItem('customGameOptions.useMcGuessMode');
     const savedPlayer = localStorage.getItem('customGameOptions.selectedPlayer');
 
+    let hasCustomOptions = false;
+
     if (savedRanks) {
       try {
-        setSelectedRanks(JSON.parse(savedRanks));
+        const parsedRanks = JSON.parse(savedRanks);
+        setSelectedRanks(parsedRanks);
+        if (parsedRanks.length > 0) {
+          hasCustomOptions = true;
+        }
       } catch (e) {
         console.error('Failed to parse saved ranks', e);
       }
     }
 
     if (savedMcGuessMode) {
-      setUseMcGuessMode(savedMcGuessMode === 'true');
+      const mcGuessEnabled = savedMcGuessMode === 'true';
+      setUseMcGuessMode(mcGuessEnabled);
+      if (mcGuessEnabled) {
+        hasCustomOptions = true;
+      }
     }
 
     if (savedPlayer) {
       setSelectedPlayer(savedPlayer);
+    }
+
+    // Open the custom options drawer if any custom options are set
+    if (hasCustomOptions) {
+      setShowCustomOptions(true);
     }
   }, []);
 
@@ -182,13 +197,18 @@ function App() {
                     className="text-sm text-gray-400 hover:text-gray-300 transition-colors flex items-center gap-2 mx-auto"
                   >
                     <ChevronDown
-                      className={`w-4 h-4 transition-transform ${showCustomOptions ? 'rotate-180' : ''}`}
+                      className={`w-4 h-4 transition-transform duration-300 ${showCustomOptions ? 'rotate-180' : ''}`}
                     />
                     Custom Game Options
                   </button>
 
-                  {showCustomOptions && (
-                    <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700 space-y-4">
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${
+                      showCustomOptions ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    }`}
+                  >
+                    <div className="min-h-0">
+                      <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700 space-y-4">
                       <p className="text-sm text-orange-300 block mb-2">Games with custom options won't count toward leaderboards.</p>
                       <hr className="border-slate-700 mb-3" />
                       <div>
@@ -263,8 +283,9 @@ function App() {
                           </div>
                         </>
                       )}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
                 
                 <hr className="border-slate-700 my-4" />
