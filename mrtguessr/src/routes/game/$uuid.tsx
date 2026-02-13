@@ -4,7 +4,7 @@ import { CompassPlugin } from '@photo-sphere-viewer/compass-plugin'
 import { useState, useEffect, useRef } from 'react'
 import Lottie, { LottieRefCurrentProps } from 'lottie-react'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Dot } from 'lucide-react'
+import { ArrowRight, Dot, Minimize2, Maximize2 } from 'lucide-react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { fetchRoundData, postGuess, GuessResult, logoUrl, API_URL, fetchDynmapNewData, GameType } from '@/lib/api'
 import { useHeader } from '@/contexts/HeaderContext'
@@ -60,6 +60,7 @@ function RouteComponent() {
   const confettiRef = useRef<LottieRefCurrentProps>(null);
   const navigate = useNavigate({from: "/game/$uuid"});
   const [mcGuessPlayer, setMcGuessPlayer] = useState<string | null>(null);
+  const [isResultsMinimized, setIsResultsMinimized] = useState(false);
 
   const { data: roundData, refetch: refetchRound, isError } = useQuery({
     queryKey: ['roundData', uuid],
@@ -131,6 +132,7 @@ function RouteComponent() {
     setShowLoadingScreen(true);
     setIsEndRoundView(false);
     setMarkerPosition(null);
+    setIsResultsMinimized(false);
     confettiRef.current?.stop();
     refetchRound();
     setTimeout(() => {
@@ -190,13 +192,15 @@ function RouteComponent() {
       </div>
       <div
         className={`
-          absolute ${isEndRoundView
+          absolute ${isEndRoundView && !isResultsMinimized
             ? `bottom-[30%] md:bottom-[25%] left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-4 w-[95%] md:w-[98%] h-[60%] md:h-[80%] rounded-lg`
+            : isEndRoundView && isResultsMinimized
+            ? `bottom-0 md:bottom-4 md:left-1/2 md:-translate-x-1/2 md:left-auto md:translate-x-0 md:right-4 w-[100%] md:w-[25%] h-[35%] md:h-[25%]`
             : `bottom-0 md:bottom-4 md:left-1/2 md:-translate-x-1/2 md:left-auto md:translate-x-0 md:right-4 w-[100%] md:w-[25%] h-[35%] md:h-[25%] md:hover:w-[50%] md:hover:h-[50%]`}
            bg-gray-900 border-2 border-gray-700 md:rounded-lg shadow-2xl transition-all duration-300 ease-in-out overflow-hidden z-100
         `}
-        onMouseEnter={() => setIsMapExpanded(true)}
-        onMouseLeave={() => setIsMapExpanded(false)}
+        onMouseEnter={() => !isEndRoundView && setIsMapExpanded(true)}
+        onMouseLeave={() => !isEndRoundView && setIsMapExpanded(false)}
       >
         <ClientOnly>
           <GameMap
@@ -213,6 +217,35 @@ function RouteComponent() {
             }}
           />
         </ClientOnly>
+        {/* Minimize/Maximize button for end round view */}
+        {isEndRoundView && (
+          <div className="absolute top-2 right-2 z-[1001] flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-white/90 hover:bg-white border-gray-700"
+              onClick={() => setIsResultsMinimized(!isResultsMinimized)}
+            >
+              {isResultsMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
+            </Button>
+            {isResultsMinimized && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-white text-black border-white hover:bg-slate-200"
+                onClick={() => {
+                  if (roundNumber >= 5) {
+                    navigate({ to: `/game/results/${uuid}`, viewTransition: true });
+                    return;
+                  }
+                  resetRound();
+                }}
+              >
+                Next Round <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            )}
+          </div>
+        )}
         <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] z-[1000] scale-75 md:scale-100 transition-all duration-300 ease-in-out ${!isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <GuessButton
             disabled={!markerPosition || guessMutation.isPending}
@@ -228,7 +261,7 @@ function RouteComponent() {
       </div>
       {/* Endgame view stats - a white background color rectangle below the map, rounded and height 20% */}
       <div className={`absolute flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8
-        bottom-4 left-1/2 -translate-x-1/2 w-[95%] md:w-[98%] h-auto md:h-[22%] rounded-lg z-[1000] transition-all duration-300 ease-in-out bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-2 border-slate-700 p-4 md:p-4 ${isEndRoundView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        bottom-4 left-1/2 -translate-x-1/2 w-[95%] md:w-[98%] h-auto md:h-[22%] rounded-lg z-[1000] transition-all duration-300 ease-in-out bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-2 border-slate-700 p-4 md:p-4 ${isEndRoundView && !isResultsMinimized ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <Lottie lottieRef={confettiRef} animationData={confettiAnimation} loop={false} autoPlay={false} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
         <div className="flex flex-col justify-center text-center">
           <h1 className="text-2xl md:text-4xl font-bold text-emerald-400">Score: {guessResult?.score.toLocaleString()}</h1>
