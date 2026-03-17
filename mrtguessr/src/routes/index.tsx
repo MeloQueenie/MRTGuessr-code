@@ -41,6 +41,7 @@ function App() {
   const [selectedRanks, setSelectedRanks] = useState<string[]>([]);
   const [showPlayerModal, setShowPlayerModal] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [useMcGuessMode, setUseMcGuessMode] = useState(false);
 
   const AVAILABLE_RANKS = [
@@ -53,6 +54,7 @@ function App() {
     const savedRanks = localStorage.getItem('customGameOptions.selectedRanks');
     const savedMcGuessMode = localStorage.getItem('customGameOptions.useMcGuessMode');
     const savedPlayer = localStorage.getItem('customGameOptions.selectedPlayer');
+    const savedPlayers = localStorage.getItem('customGameOptions.selectedPlayers');
 
     let hasCustomOptions = false;
 
@@ -80,6 +82,14 @@ function App() {
       setSelectedPlayer(savedPlayer);
     }
 
+    if (savedPlayers) {
+      try {
+        setSelectedPlayers(JSON.parse(savedPlayers));
+      } catch (e) {
+        console.error('Failed to parse saved players', e);
+      }
+    }
+
     // Open the custom options drawer if any custom options are set
     if (hasCustomOptions) {
       setShowCustomOptions(true);
@@ -105,15 +115,26 @@ function App() {
     }
   }, [selectedPlayer]);
 
+  // Save selectedPlayers to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedPlayers.length > 0) {
+      localStorage.setItem('customGameOptions.selectedPlayers', JSON.stringify(selectedPlayers));
+    } else {
+      localStorage.removeItem('customGameOptions.selectedPlayers');
+    }
+  }, [selectedPlayers]);
+
   // Reset all custom game options to defaults
   const resetCustomOptions = () => {
     setSelectedRanks([]);
     setUseMcGuessMode(false);
     setSelectedPlayer(null);
+    setSelectedPlayers([]);
     // Clear from localStorage
     localStorage.removeItem('customGameOptions.selectedRanks');
     localStorage.removeItem('customGameOptions.useMcGuessMode');
     localStorage.removeItem('customGameOptions.selectedPlayer');
+    localStorage.removeItem('customGameOptions.selectedPlayers');
   };
 
   const {data: healthData} = useQuery({
@@ -129,17 +150,26 @@ function App() {
     refetchInterval: showPlayerModal ? 5000 : false,
   });
 
+  const isMultiplayer = selectedPlayers.length > 1;
+
   const startGameMutation = useMutation({
     mutationFn: ({ gameType, customOptions }: {
       gameType: 'NORMAL' | 'MC_GUESS',
       customOptions?: CustomGameOptions
     }) => startGame(gameType, customOptions),
     onSuccess: (data) => {
-      if (selectedPlayer) {
-        sessionStorage.setItem('mcGuessPlayer', selectedPlayer);
-      }
       setShowPlayerModal(false);
-      navigate({ to: `/game/${data.uuid}`, viewTransition: true });
+      if (useMcGuessMode && selectedPlayers.length > 0) {
+        // Mark this tab as the host for this game uuid
+        sessionStorage.setItem('mcGuessGameUuid', data.uuid);
+        navigate({
+          to: `/game/${data.uuid}`,
+          search: { players: selectedPlayers.join(',') },
+          viewTransition: true,
+        });
+      } else {
+        navigate({ to: `/game/${data.uuid}`, viewTransition: true });
+      }
     },
   });
 
@@ -174,7 +204,7 @@ function App() {
               <>
                 <div
                   onClick={() => {
-                    if (useMcGuessMode && !selectedPlayer) {
+                    if (useMcGuessMode && selectedPlayers.length === 0) {
                       setShowPlayerModal(true);
                     } else {
                       const customOptions = selectedRanks.length > 0
@@ -247,12 +277,14 @@ function App() {
                                 if (checked) {
                                   // When enabling, clear any previous player selection and show dialog
                                   setSelectedPlayer(null);
+                                  setSelectedPlayers([]);
                                   setUseMcGuessMode(true);
                                   setShowPlayerModal(true);
                                 } else {
                                   // When disabling, clear everything
                                   setUseMcGuessMode(false);
                                   setSelectedPlayer(null);
+                                  setSelectedPlayers([]);
                                 }
                               }}
                             />
@@ -260,16 +292,23 @@ function App() {
                               {useMcGuessMode ? 'Enabled' : 'Disabled'}
                             </span>
                           </div>
-                          {useMcGuessMode && selectedPlayer && (
+                              {useMcGuessMode && selectedPlayers.length > 0 && (
                             <div className="text-xs text-cyan-400 mt-2">
-                              Selected player: {selectedPlayer}
+                              {selectedPlayers.length === 1
+                                ? `Selected player: ${selectedPlayers[0]}`
+                                : `${selectedPlayers.length} players selected — multiplayer mode`}
+                            </div>
+                          )}
+                          {useMcGuessMode && selectedPlayers.length > 1 && !auth.isAuthenticated && (
+                            <div className="text-xs text-orange-400 mt-1">
+                              You must be logged in to host a multiplayer game.
                             </div>
                           )}
                         </div>)
                       }
 
                       {/* Reset Button */}
-                      {(selectedRanks.length > 0 || useMcGuessMode || selectedPlayer) && (
+                      {(selectedRanks.length > 0 || useMcGuessMode || selectedPlayer || selectedPlayers.length > 0) && (
                         <>
                           <hr className="border-slate-700 my-3" />
                           <div className="flex justify-center">
@@ -336,51 +375,71 @@ function App() {
       {/* Player Selection Modal */}
       <Dialog open={showPlayerModal} onOpenChange={(open) => {
         setShowPlayerModal(open);
-        if (!open && !selectedPlayer) {
+        if (!open && selectedPlayers.length === 0) {
           setUseMcGuessMode(false);
         }
       }}>
         <DialogContent className="bg-slate-900 border-slate-700 text-white">
           <DialogHeader>
-            <DialogTitle>Select Your Minecraft Player</DialogTitle>
+            <DialogTitle>Select Minecraft Players</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Choose your username from currently online players. Your real-time position will be tracked during the game.
+              Choose one or more players from currently online players. Select multiple for multiplayer — each player opens the game link in their browser.
             </DialogDescription>
           </DialogHeader>
+          {isMultiplayer && !auth.isAuthenticated && (
+            <p className="text-sm text-orange-400 bg-orange-950/30 border border-orange-800 rounded px-3 py-2">
+              You must be logged in to host a multiplayer game. Viewers match by their Discord username.
+            </p>
+          )}
           <div className="max-h-[400px] overflow-y-auto space-y-2">
             {dynmapData?.players && dynmapData.players.length > 0 ? (
-              dynmapData.players.map((player) => (
-                <Button
-                  key={player.account}
-                  variant={selectedPlayer === player.name ? "default" : "outline"}
-                  className={`w-full justify-start gap-3 ${
-                    selectedPlayer === player.name
-                      ? 'bg-cyan-500 hover:bg-cyan-600 text-white'
-                      : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600'
-                  }`}
-                  onClick={() => setSelectedPlayer(player.name)}
-                >
-                  <img
-                    src={getPlayerFaceUrl(player.name)}
-                    alt={`${player.name}'s face`}
-                    className="w-8 h-8 pixelated"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
-                  {player.name}
-                </Button>
-              ))
+              dynmapData.players.map((player) => {
+                const isSelected = selectedPlayers.includes(player.name);
+                return (
+                  <Button
+                    key={player.account}
+                    variant={isSelected ? "default" : "outline"}
+                    className={`w-full justify-start gap-3 ${
+                      isSelected
+                        ? 'bg-cyan-500 hover:bg-cyan-600 text-white'
+                        : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600'
+                    }`}
+                    onClick={() => {
+                      setSelectedPlayers(prev =>
+                        isSelected ? prev.filter(p => p !== player.name) : [...prev, player.name]
+                      );
+                    }}
+                  >
+                    <img
+                      src={getPlayerFaceUrl(player.name)}
+                      alt={`${player.name}'s face`}
+                      className="w-8 h-8 pixelated"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                    {player.name}
+                    {isSelected && <span className="ml-auto text-xs opacity-80">✓</span>}
+                  </Button>
+                );
+              })
             ) : (
               <p className="text-gray-400 text-center py-4">
                 {dynmapData ? 'No players currently online' : 'Loading players...'}
               </p>
             )}
           </div>
+          {selectedPlayers.length > 0 && (
+            <p className="text-xs text-cyan-400">
+              {selectedPlayers.length === 1
+                ? `1 player selected`
+                : `${selectedPlayers.length} players selected — multiplayer mode`}
+            </p>
+          )}
           <div className="flex gap-2 justify-end">
             <Button
               variant="outline"
               onClick={() => {
                 setShowPlayerModal(false);
-                if (!selectedPlayer) {
+                if (selectedPlayers.length === 0) {
                   setUseMcGuessMode(false);
                 }
               }}
@@ -389,7 +448,7 @@ function App() {
               Cancel
             </Button>
             <Button
-              disabled={!selectedPlayer}
+              disabled={selectedPlayers.length === 0}
               onClick={() => {
                 setShowPlayerModal(false);
               }}

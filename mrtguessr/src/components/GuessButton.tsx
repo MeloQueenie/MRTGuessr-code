@@ -4,9 +4,10 @@ interface GuessButtonProps {
   onClick: () => void;
   className?: string;
   disabled?: boolean;
+  label?: string;
 }
 
-const GuessButton = ({ onClick, className = '', disabled = false }: GuessButtonProps) => (
+const GuessButton = ({ onClick, className = '', disabled = false, label }: GuessButtonProps) => (
   <button
     onClick={onClick}
     disabled={disabled}
@@ -24,11 +25,17 @@ const GuessButton = ({ onClick, className = '', disabled = false }: GuessButtonP
         backgroundPosition: 'left center',
       }}
     >
-      <img
-        src={guessButtonPartsUrl.Text}
-        alt="GUESS"
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[60%] w-auto"
-      />
+      {label ? (
+        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold text-sm tracking-widest uppercase whitespace-nowrap">
+          {label}
+        </span>
+      ) : (
+        <img
+          src={guessButtonPartsUrl.Text}
+          alt="GUESS"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[60%] w-auto"
+        />
+      )}
     </div>
     <img src={guessButtonPartsUrl.RCorner} alt="" className="h-full w-auto flex-shrink-0" />
   </button>
