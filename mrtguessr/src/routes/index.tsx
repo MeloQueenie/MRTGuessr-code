@@ -23,7 +23,7 @@ import { MultiSelect } from '@/components/ui/multi-select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { useFeatureFlagEnabled } from '@posthog/react'
+
 
 export const Route = createFileRoute('/')({component: App })
 
@@ -33,9 +33,6 @@ function App() {
   });
 
   const auth = useAuth();
-
-  // -- Feature Flags --
-  const mcGuessEnabled = useFeatureFlagEnabled('mc-guess-mode');
 
   const [showCustomOptions, setShowCustomOptions] = useState(false);
   const [selectedRanks, setSelectedRanks] = useState<string[]>([]);
@@ -262,50 +259,48 @@ function App() {
                       )}
 
                       <hr className="border-slate-700 my-3" />
-                      {mcGuessEnabled &&
-                        (<div>
-                          <label className="text-sm text-white font-semibold block mb-2">
-                            Get to X Mode
-                          </label>
-                          <p className="text-xs text-gray-400 mb-3">
-                            Track your real-time position as you navigate to the location in-game.
-                          </p>
-                          <div className="flex items-center justify-center gap-3">
-                            <Switch
-                              checked={useMcGuessMode}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  // When enabling, clear any previous player selection and show dialog
-                                  setSelectedPlayer(null);
-                                  setSelectedPlayers([]);
-                                  setUseMcGuessMode(true);
-                                  setShowPlayerModal(true);
-                                } else {
-                                  // When disabling, clear everything
-                                  setUseMcGuessMode(false);
-                                  setSelectedPlayer(null);
-                                  setSelectedPlayers([]);
-                                }
-                              }}
-                            />
-                            <span className="text-sm text-gray-300">
-                              {useMcGuessMode ? 'Enabled' : 'Disabled'}
-                            </span>
+                      <div>
+                        <label className="text-sm text-white font-semibold block mb-2">
+                          Get to X Mode
+                        </label>
+                        <p className="text-xs text-gray-400 mb-3">
+                          Track your real-time position as you navigate to the location in-game.
+                        </p>
+                        <div className="flex items-center justify-center gap-3">
+                          <Switch
+                            checked={useMcGuessMode}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                // When enabling, clear any previous player selection and show dialog
+                                setSelectedPlayer(null);
+                                setSelectedPlayers([]);
+                                setUseMcGuessMode(true);
+                                setShowPlayerModal(true);
+                              } else {
+                                // When disabling, clear everything
+                                setUseMcGuessMode(false);
+                                setSelectedPlayer(null);
+                                setSelectedPlayers([]);
+                              }
+                            }}
+                          />
+                          <span className="text-sm text-gray-300">
+                            {useMcGuessMode ? 'Enabled' : 'Disabled'}
+                          </span>
+                        </div>
+                        {useMcGuessMode && selectedPlayers.length > 0 && (
+                          <div className="text-xs text-cyan-400 mt-2">
+                            {selectedPlayers.length === 1
+                              ? `Selected player: ${selectedPlayers[0]}`
+                              : `${selectedPlayers.length} players selected — multiplayer mode`}
                           </div>
-                              {useMcGuessMode && selectedPlayers.length > 0 && (
-                            <div className="text-xs text-cyan-400 mt-2">
-                              {selectedPlayers.length === 1
-                                ? `Selected player: ${selectedPlayers[0]}`
-                                : `${selectedPlayers.length} players selected — multiplayer mode`}
-                            </div>
-                          )}
-                          {useMcGuessMode && selectedPlayers.length > 1 && !auth.isAuthenticated && (
-                            <div className="text-xs text-orange-400 mt-1">
-                              You must be logged in to host a multiplayer game.
-                            </div>
-                          )}
-                        </div>)
-                      }
+                        )}
+                        {useMcGuessMode && selectedPlayers.length > 1 && !auth.isAuthenticated && (
+                          <div className="text-xs text-orange-400 mt-1">
+                            You must be logged in to host a multiplayer game.
+                          </div>
+                        )}
+                      </div>
 
                       {/* Reset Button */}
                       {(selectedRanks.length > 0 || useMcGuessMode || selectedPlayer || selectedPlayers.length > 0) && (
